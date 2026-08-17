@@ -11,22 +11,30 @@
 
 <form id="formLogin">
 
-<label id="labelUsuario" for="usuario">E-mail:</label>
-<input
- type="text"
- id="login" 
- autocomplete="username" 
- placeholder="Digite seu e-mail"
- required>
- 
-<label for="senha">Senha:</label>
-<input 
-type="password" 
-id="senha" 
-autocomplete="current-password" 
-placeholder="Digite sua senha"
-required>
-<button type="submit">Entrar</button><div id="mensagem"></div>
+    <label for="login">E-mail ou usuário:</label>
+
+    <input
+        type="text"
+        id="login"
+        autocomplete="username"
+        placeholder="Digite seu e-mail ou usuário"
+        required
+    >
+
+    <label for="senha">Senha:</label>
+
+    <input
+        type="password"
+        id="senha"
+        autocomplete="current-password"
+        placeholder="Digite sua senha"
+        required
+    >
+
+    <button type="submit">Entrar</button>
+
+    <div id="mensagem"></div>
+
 </form>
 
 
@@ -34,41 +42,53 @@ required>
 <hr><button type="button" onclick="location.href='/agendamento.html'">Agendar atendimento</button>
 </div>
 <script>
-let tipo='cidadao';
-const usuario=document.getElementById('usuario'), descricao=document.getElementById('descricao'), label=document.getElementById('labelUsuario'), linkCadastro=document.getElementById('linkCadastro');
-function modo(t){tipo=t;const admin=t==='admin';label.textContent=admin?'Usuário:':'E-mail:';usuario.type=admin?'text':'email';usuario.placeholder=admin?'Digite o usuário':'Digite seu e-mail';descricao.textContent=admin?'Entre como administrador para consultar e gerenciar os agendamentos.':'Entre com seu e-mail e senha para consultar seus agendamentos.';linkCadastro.style.display=admin?'none':'block';document.getElementById('mensagem').textContent='';}
-document.getElementById('tabCidadao').onclick=()=>modo('cidadao');document.getElementById('tabAdmin').onclick=()=>modo('admin');
-document.getElementById('formLogin').addEventListener('submit',async e=>{e.preventDefault();const m=document.getElementById('mensagem');m.textContent='';try{const endpoint=tipo==='admin'?'/api/login':'/api/cidadao/login';const body=tipo==='admin'?{usuario:usuario.value.trim(),senha:document.getElementById('senha').value}:{email:usuario.value.trim(),senha:document.getElementById('senha').value};const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.mensagem||'Falha no login.');location.href=tipo==='admin'?'/admin.html':'/cidadao.html';}catch(err){m.className='erro';m.textContent=err.message;}});
-modo('cidadao');
-document.getElementById('formLogin').addEventListener('login').value.trim();
-const senha = document.getElementById('senha').value;
+document.getElementById('formLogin').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-if (!login || !senha){
-    alert('Preencha o usuário/e-mail e a senha');
-    return;
-}
+    const mensagem = document.getElementById('mensagem');
 
-try{
-    const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            login: login,
-            senha: senha
-        })
-    });
+    const login = document.getElementById('login').value.trim();
+    const senha = document.getElementById('senha').value;
 
-    const resultado = await response.json();
+    mensagem.textContent = '';
+    mensagem.className = '';
 
-    if(response.ok) {
-        window.location.href = resultado.redirect;
-    } else {
-        alert(resultado.mensagem || 'Usuário ou senha inválidos');
+    if (!login || !senha) {
+        mensagem.textContent = 'Preencha o usuário/e-mail e a senha.';
+        mensagem.className = 'erro';
+        return;
     }
-} catch(error) {
-    console.error('Erro ao fazer login', error);
-    alert('Não foi possível conectar ao servidor');
-};
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                login: login,
+                senha: senha
+            })
+        });
+
+        const resultado = await response.json();
+
+        if (!response.ok) {
+            mensagem.textContent =
+                resultado.mensagem || 'Usuário ou senha inválidos.';
+            mensagem.className = 'erro';
+            return;
+        }
+
+        // O BACKEND decidiu quem é o usuário.
+        window.location.href = resultado.redirect;
+
+    } catch (error) {
+        console.error(error);
+
+        mensagem.textContent =
+            'Não foi possível conectar ao servidor.';
+        mensagem.className = 'erro';
+    }
+});
 </script></body></html>
