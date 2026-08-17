@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Login - Agendamento</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="container">
+<div class="top">
+    <div class="left-top">
+        <img src="images.jpg" alt="Logo da Prefeitura"></div><div class="center-top"><h2>Login</h2></div><div class="right-top"></div></div>
+<div style="display:flex;gap:10px;margin-bottom:15px"></div>
+<p id="descricao">Entre com seu e-mail e senha para consultar seus agendamentos.</p>
+
+<form id="formLogin">
+
+<label id="labelUsuario" for="usuario">E-mail:</label>
+<input
+ type="text"
+ id="login" 
+ autocomplete="username" 
+ placeholder="Digite seu e-mail"
+ required>
+ 
+<label for="senha">Senha:</label>
+<input 
+type="password" 
+id="senha" 
+autocomplete="current-password" 
+placeholder="Digite sua senha"
+required>
+<button type="submit">Entrar</button><div id="mensagem"></div>
+</form>
+
+
+<div id="linkCadastro"><hr><p>Ainda não possui conta?</p><button type="button" onclick="location.href='/cadastro.html'">Criar conta de cidadão</button></div>
+<hr><button type="button" onclick="location.href='/agendamento.html'">Agendar atendimento</button>
+</div>
+<script>
+let tipo='cidadao';
+const usuario=document.getElementById('usuario'), descricao=document.getElementById('descricao'), label=document.getElementById('labelUsuario'), linkCadastro=document.getElementById('linkCadastro');
+function modo(t){tipo=t;const admin=t==='admin';label.textContent=admin?'Usuário:':'E-mail:';usuario.type=admin?'text':'email';usuario.placeholder=admin?'Digite o usuário':'Digite seu e-mail';descricao.textContent=admin?'Entre como administrador para consultar e gerenciar os agendamentos.':'Entre com seu e-mail e senha para consultar seus agendamentos.';linkCadastro.style.display=admin?'none':'block';document.getElementById('mensagem').textContent='';}
+document.getElementById('tabCidadao').onclick=()=>modo('cidadao');document.getElementById('tabAdmin').onclick=()=>modo('admin');
+document.getElementById('formLogin').addEventListener('submit',async e=>{e.preventDefault();const m=document.getElementById('mensagem');m.textContent='';try{const endpoint=tipo==='admin'?'/api/login':'/api/cidadao/login';const body=tipo==='admin'?{usuario:usuario.value.trim(),senha:document.getElementById('senha').value}:{email:usuario.value.trim(),senha:document.getElementById('senha').value};const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.mensagem||'Falha no login.');location.href=tipo==='admin'?'/admin.html':'/cidadao.html';}catch(err){m.className='erro';m.textContent=err.message;}});
+modo('cidadao');
+document.getElementById('formLogin').addEventListener('login').value.trim();
+const senha = document.getElementById('senha').value;
+
+if (!login || !senha){
+    alert('Preencha o usuário/e-mail e a senha');
+    return;
+}
+
+try{
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            login: login,
+            senha: senha
+        })
+    });
+
+    const resultado = await response.json();
+
+    if(response.ok) {
+        window.location.href = resultado.redirect;
+    } else {
+        alert(resultado.mensagem || 'Usuário ou senha inválidos');
+    }
+} catch(error) {
+    console.error('Erro ao fazer login', error);
+    alert('Não foi possível conectar ao servidor');
+};
+</script></body></html>
