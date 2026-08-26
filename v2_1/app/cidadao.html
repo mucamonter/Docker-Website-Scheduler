@@ -12,7 +12,7 @@ async function carregar(){
  document.getElementById('boasVindas').textContent='Olá, '+d.cidadao.nome+'.';
  const lista=document.getElementById('lista');
  if(!d.agendamentos.length){lista.innerHTML='<p>Você ainda não possui agendamentos.</p>';return;}
- lista.innerHTML=d.agendamentos.map(a=>`<div class="agendamento-card"><strong>${a.data_br} às ${a.horario}</strong><br>Motivo: ${escapeHtml(a.motivo||'—')}<br>Status: <strong>${escapeHtml(a.status)}</strong><br>${a.status==='agendado'?`<button data-id="${a.id}" class="cancelar">Cancelar</button>`:''}</div>`).join('');
+ lista.innerHTML=d.agendamentos.map(a=>`<div class="agendamento-card"><strong>${a.data_br} às ${a.horario}</strong><br>Motivo: ${escapeHtml(a.motivo||'—')}<br>Status: <strong>${escapeHtml(a.status)}</strong><br>${['pendente','no paço'].includes(a.status)?`<button data-id="${a.id}" class="cancelar">Cancelar</button>`:''}</div>`).join('');
  document.querySelectorAll('.cancelar').forEach(b=>b.onclick=async()=>{if(!confirm('Deseja realmente cancelar este agendamento?'))return;const r=await fetch('/api/cidadao/agendamentos/'+b.dataset.id+'/cancelar',{method:'PATCH'});const x=await r.json();if(!r.ok){alert(x.mensagem||'Erro');return;}carregar();});
 }
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}

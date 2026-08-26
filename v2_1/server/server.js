@@ -8,15 +8,7 @@ const app = express();
 
 const PORT = Number(process.env.PORT || 3000);
 
-const HORARIOS = [
-    '09:00',
-    '10:00',
-    '11:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00'
-];
+const HORARIOS=['09:00', '09:30','10:00', '10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30'];
 
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
@@ -283,12 +275,36 @@ app.get('/api/admin/me', exigirAdmin, (req, res) => {
 
 });
 
+app.get('/app/cidadao.html', exigirAdmin, async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `
+            SELECT
+                id,
+                nome,
+                email,
+                cep,
+                endereco,
+                status,
+                DATE_FORMAT(criado_em, '%d/%m/%Y %H:%i:%s') AS criado_em
+            FROM cidadaos
+            ORDER BY nome ASC
+            `
+        );
+
+        res.json({ cidadaos: rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: 'Não foi possível carregar os cidadãos.' });
+    }
+});
+
 
 // ============================================================
 // CADASTRO DE CIDADÃO
 // ============================================================
 
-app.post('/api/cidadao/cadastro', async (req, res) => {
+app.post('/app/cadastro.html', async (req, res) => {
 
     const nome = texto(req.body.nome);
     const email = texto(req.body.email).toLowerCase();
@@ -342,8 +358,8 @@ app.post('/api/cidadao/cadastro', async (req, res) => {
         const [resultado] = await pool.execute(
             `
             INSERT INTO cidadaos
-            (nome, email, senha_hash, cep, endereco)
-            VALUES (?, ?, ?, ?, ?)
+            (nome, email, senha_hash, cep, endereco, status)
+            VALUES (?, ?, ?, ?, ?, 'no paço')
             `,
             [
                 nome,
@@ -357,7 +373,8 @@ app.post('/api/cidadao/cadastro', async (req, res) => {
 
         res.status(201).json({
             sucesso: true,
-            id: resultado.insertId
+            id: resultado.insertId,
+            status: 'no paço'
         });
 
     } catch (error) {
@@ -375,7 +392,7 @@ app.post('/api/cidadao/cadastro', async (req, res) => {
 // DADOS DO CIDADÃO LOGADO
 // ============================================================
 
-app.get('/api/cidadao/me', exigirCidadao, async (req, res) => {
+app.get('/app/cidadao/me', exigirCidadao, async (req, res) => {
 
     try {
 
@@ -533,7 +550,7 @@ app.patch(
                 WHERE
                     id = ?
                     AND cidadao_id = ?
-                    AND status = 'agendado'
+                    AND status IN ('pendente', 'no paço')
                 `,
                 [
                     id,
@@ -683,28 +700,64 @@ app.post('/api/agendamentos', async (req, res) => {
     const motivo = texto(req.body.motivo);
     const data = texto(req.body.data);
     const horario = texto(req.body.horario);
-
     const jaTemCadastro = req.body.jaTemCadastro === true;
 
-    let email = jaTemCadastro
-        ? 'Já Cadastrado'
-        : texto(req.body.email);
+    let email = jaTemCadastro ? '' : texto(req.body.email);
+    let cep = jaTemCadastro ? '' : texto(req.body.cep);
+    let endereco = jaTemCadastro ? '' : texto(req.body.endereco);
 
-    let cep = jaTemCadastro
-        ? 'Já Cadastrado'
-        : texto(req.body.cep);
-
-    let endereco = jaTemCadastro
-        ? 'Já Cadastrado'
-        : texto(req.body.endereco);
-
-
-    if (!nome || !motivo || !data || !horario) {
+    if (!motivo || !data || !horario) {
         return res.status(400).json({
             mensagem: 'Preencha todos os campos obrigatórios.'
         });
     }
 
+    if (jaTemCadastro) {
+        if (req.session?.tipo !== 'cidadao' || !req.session?.cidadaoId) {
+            return res.status(401).json({
+                mensagem: 'Você precisa estar logado para usar um cadastro existente.'
+            });
+        }
+
+        const [contas] = await pool.execute(
+            `
+            SELECT
+                id,
+                nome,
+                email,
+                cep,
+                endereco
+            FROM cidadaos
+            WHERE id = ?
+            LIMIT 1
+            `,
+            [req.session.cidadaoId]
+        );
+
+        if (contas.length === 0) {
+            return res.status(401).json({
+                mensagem: 'Cadastro não encontrado.'
+            });
+        }
+
+        const cidadao = contas[0];
+        nome = cidadao.nome;
+        email = cidadao.email;
+        cep = cidadao.cep || '';
+        endereco = cidadao.endereco || '';
+    } else {
+        if (!nome || !email || !cep || !endereco) {
+            return res.status(400).json({
+                mensagem: 'Preencha todos os campos obrigatórios.'
+            });
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({
+                mensagem: 'Informe um e-mail válido.'
+            });
+        }
+    }
 
     if (!dataValida(data)) {
         return res.status(400).json({
@@ -712,13 +765,11 @@ app.post('/api/agendamentos', async (req, res) => {
         });
     }
 
-
     if (data < hoje()) {
         return res.status(400).json({
             mensagem: 'Não é possível agendar para uma data passada.'
         });
     }
-
 
     if (!diaUtil(data)) {
         return res.status(400).json({
@@ -726,46 +777,15 @@ app.post('/api/agendamentos', async (req, res) => {
         });
     }
 
-
     if (!HORARIOS.includes(horario)) {
         return res.status(400).json({
             mensagem: 'Horário inválido.'
         });
     }
 
+    const cidadaoId = req.session?.cidadaoId || null;
 
     try {
-
-        let cidadaoId = req.session?.cidadaoId || null;
-
-
-        // Se estiver logado, usa os dados reais do cidadão
-        if (cidadaoId) {
-
-            const [conta] = await pool.execute(
-                `
-                SELECT
-                    nome,
-                    email,
-                    cep,
-                    endereco
-                FROM cidadaos
-                WHERE id = ?
-                `,
-                [cidadaoId]
-            );
-
-
-            if (conta.length > 0) {
-
-                nome = conta[0].nome;
-                email = conta[0].email;
-                cep = conta[0].cep || cep;
-                endereco = conta[0].endereco || endereco;
-            }
-        }
-
-
         const [resultado] = await pool.execute(
             `
             INSERT INTO agendamentos
@@ -780,7 +800,7 @@ app.post('/api/agendamentos', async (req, res) => {
                 endereco,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'agendado')
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendente')
             `,
             [
                 cidadaoId,
@@ -794,7 +814,6 @@ app.post('/api/agendamentos', async (req, res) => {
             ]
         );
 
-
         res.status(201).json({
             sucesso: true,
             id: resultado.insertId,
@@ -806,15 +825,13 @@ app.post('/api/agendamentos', async (req, res) => {
 
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({
-                mensagem:
-                    'Este horário já está reservado. Escolha outro horário.'
+                mensagem: 'Este horário já está reservado. Escolha outro horário.'
             });
         }
 
-
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             mensagem: 'Não foi possível salvar o agendamento.'
         });
     }
@@ -855,8 +872,9 @@ app.get(
 
             if (
                 ![
-                    'agendado',
-                    'feito',
+                    'pendente',
+                    'no paço',
+                    'atendido',
                     'cancelado'
                 ].includes(status)
             ) {
@@ -888,7 +906,7 @@ app.get(
                 endereco,
                 DATE_FORMAT(
                     data_registro,
-                    '%Y-%m-%d %H:%i:%s'
+                    '%d/%m/%Y %H:%i:%s'
                 ) AS data_registro,
                 status
             FROM agendamentos
@@ -1073,8 +1091,9 @@ app.patch(
 
         if (
             ![
-                'agendado',
-                'feito',
+                'pendente',
+                'no paço',
+                'atendido',
                 'cancelado'
             ].includes(status)
         ) {
@@ -1140,13 +1159,31 @@ app.get('/login', (req, res) => {
     );
 });
 
+app.get('/login.html', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, '..', 'app', 'login.html')
+    );
+});
+
 app.get('/cadastro', (req, res) => {
     res.sendFile(
         path.join(__dirname, '..', 'app', 'cadastro.html')
     );
 });
 
+app.get('/cadastro.html', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, '..', 'app', 'cadastro.html')
+    );
+});
+
 app.get('/agendamento', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, '..', 'app', 'agendamento.html')
+    );
+});
+
+app.get('/agendamento.html', (req, res) => {
     res.sendFile(
         path.join(__dirname, '..', 'app', 'agendamento.html')
     );

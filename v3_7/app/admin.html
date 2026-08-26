@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Painel Administrativo</title><link rel="stylesheet" href="style.css">
+<style>
+/* Configurações Globais e Tipografia */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background: #f8fafc; /* Cinza azulado muito moderno */
+  color: #334155;      /* Texto principal mais suave que o preto puro */
+  padding: 24px;
+}
+
+.container {
+  max-width: 1450px !important;
+  margin: 0 auto;
+}
+
+/* Topbar e Títulos */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+h2, h3 {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+p.small {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Botões Modernizados */
+button {
+  background: #2563eb; /* Azul profissional */
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+button.sec {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+button.sec:hover {
+  background: #cbd5e1;
+}
+
+button.danger {
+  background: #dc2626;
+}
+
+button.danger:hover {
+  background: #b91c1c;
+}
+
+/* Abas (Tabs) */
+.tabs {
+  display: flex;
+  gap: 0px;
+  margin: 0px 0;
+  background: #e2e8f0;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.tabs button {
+  background: transparent;
+  color: #64748b;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.tabs button:hover {
+  color: #0f172a;
+}
+
+.tabs button.ativo {
+  background: white;
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-weight: 600;
+}
+
+/* Painel Principal */
+.painel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+}
+
+/* Filtros corrigidos e idênticos */
+.filtros {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filtros input, .filtros select {
+  flex: 1 1 0%;
+  min-width: 160px;
+  width: 0;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.filtros input:focus, .filtros select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Tabelas Elegantes */
+.tabela-wrap {
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th, td {
+  padding: 14px 16px; /* Mais espaço para respirar */
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+tr:hover td {
+  background: #f8fafc; /* Efeito visual ao passar o mouse na linha */
+}
+
+/* Status e Tags */
+.status {
+  font-weight: 600;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 9999px; /* Formato de pílula moderno */
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sucesso { color: #16a34a; }
+.erro { color: #dc2626; }
+
+/* Modais Sofisticados */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6); /* Backdrop mais escuro e elegante */
+  backdrop-filter: blur(4px);        /* Efeito de desfoque ao fundo */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 1000;
+}
+
+.modal-backdrop.aberto {
+  display: flex;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 750px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 28px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.modal label {
+  display: block;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.modal input, .modal textarea, .modal select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+.modal input:focus, .modal textarea:focus, .modal select:focus {
+  border-color: #2563eb;
+}
+
+.modal textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.acoes-modal {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
+}
+
+/* Utilitários */
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+  background: #f8fafc;
+}
+
+
+.grupo-row td { background: #fff7ed !important; border-top: 2px solid #f59e0b; border-bottom: 1px solid #fed7aa; }
+.grupo-row td:first-child { border-left: 4px solid #f59e0b; }
+.grupo-tag { background:#ffedd5; color:#9a3412; font-weight:700; }
+.slot-grid { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:8px; margin-top:8px; }
+.slot-btn { position:relative; }
+.slot-btn input { position:absolute; opacity:0; pointer-events:none; }
+.slot-btn label { display:block; padding:10px; text-align:center; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:#fff; font-weight:600; }
+.slot-btn input:checked + label { background:#ffedd5; border-color:#f59e0b; color:#9a3412; }
+.participantes { display:grid; gap:10px; margin-top:10px; }
+.participante { display:grid; grid-template-columns:1fr 220px auto; gap:8px; align-items:end; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; }
+.participante .principal { font-size:12px; color:#9a3412; font-weight:700; }
+@media(max-width:700px){.slot-grid{grid-template-columns:repeat(2,1fr)}.participante{grid-template-columns:1fr}}
+
+.hidden { display: none !important; }
+
+/* Responsividade */
+@media(max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+  .full { grid-column: auto; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .top-actions { width: 100%; }
+  .top-actions button { flex: 1; }
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div><h2>Painel de atendimento</h2><p id="perfil"></p></div>
+    <div class="top-actions"><button id="novoAtendimento">Novo atendimento</button><button id="sair" class="sec">Sair</button></div>
+  </div>
+
+  <div class="tabs">
+    <button id="abaAtendimentos" class="ativo">Atendimentos Cadastrados</button>
+    <button id="abaPendencias">Pendências</button>
+    <button id="abaUsuarios" class="admin-only">Usuários</button>
+    <button id="abaCidadaos" class="admin-only">Cidadãos Cadastrados</button>
+  </div>
+
+  <section id="painelAtendimentos" class="painel">
+    <div class="filtros">
+      
+      <input id="busca" placeholder="Buscar nome, e-mail, telefone, CEP, endereço, motivo, participante...">
+      <input id="filtroData" type="date">
+      <select id="filtroAtendimento"><option value="">Todos os atendimentos</option><option value="marcado">Online</option><option value="no_paco">No Paço</option></select>
+      <select id="filtroStatus"><option value="">Todos os status</option><option value="pedido_pendente">Pendente</option><option value="pedido_atendido">Atendido</option><option value="pedido_nao_atendido">Não atendido</option><option value="cancelado">Cancelado</option></select>
+    </div>
+    <style>
+    </style>
+    <div id="mensagem"></div>
+    <div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Atendimentos Salvos</th><th>Cidadão / Grupo</th><th>Telefone</th><th>Motivo</th><th>Tratativa</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tabela"></tbody></table></div>
+  </section>
+
+  <section id="painelPendencias" class="painel hidden">
+    <h3>Pedidos pendentes sem tratativa</h3><p class="small">Mostra somente pedidos ainda pendentes e sem conclusão registrada.</p>
+    <div id="msgPendencias"></div><div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cidadão</th><th>Telefone</th><th>Motivo</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tabelaPendencias"></tbody></table></div>
+  </section>
+
+  <section id="painelUsuarios" class="painel hidden admin-only">
+    <div class="topbar"><div><h3>Usuários do painel</h3><p class="small">Somente administradores.</p></div><button id="novoUsuario">Criar usuário</button></div>
+    <div id="msgUsuarios"></div><div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Criado em</th><th>Ações</th></tr></thead><tbody id="tabelaUsuarios"></tbody></table></div>
+  </section>
+
+  <section id="painelCidadaos" class="painel hidden admin-only">
+    <h3>Cidadãos</h3><p class="small">Consulte contas de cidadãos, altere a senha e veja os agendamentos do cidadão selecionado.</p>
+    <div class="filtros"><input id="buscaCidadao" placeholder="Buscar por nome, e-mail ou telefone..."><button id="buscarCidadao">Buscar</button></div>
+    <div id="msgCidadaos"></div><div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Criado em</th><th>Ação</th></tr></thead><tbody id="tabelaCidadaos"></tbody></table></div>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="modalAtendimento">
+  <div class="modal">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+  <h3 id="tituloAtendimento">Novo atendimento</h3>
+  <button type="button" id="toggleGrupo" class="sec">Atendimento em grupo</button>
+</div>
+<form id="formAtendimento">
+  <input type="hidden" id="editId">
+  <input type="hidden" id="editTipo">
+  <div class="grid">
+  <div id="campoNome" class="full">
+  <label>Nome</label>
+  <input id="editNome" required>
+  </div>
+  <div id="campoEmail">
+    <label>E-mail</label>
+    <input id="editEmail" type="email">
+  </div>
+  <div>
+  <label>Atendimento</label>
+
+  <select id="editAtendimento">
+  <option value="no_paco">No Paço</option>
+  <option value="marcado">Online</option>
+  </select>
+  </div>
+  
+  <div>
+   <label>Data</label>
+   <input id="editData" type="date" required>
+  </div><div id="campoHorario">
+    
+  <label>Horário</label>
+  <select id="editHorario"></select>
+  </div>
+  
+  <div id="blocoGrupo" class="full hidden">
+    <label>Participantes <span class="small">O primeiro é o representante. Para os demais, informe somente o nome.</span></label>
+    <div id="participantes" class="participantes">
+    </div>
+    
+    <button type="button" id="adicionarParticipante" class="sec">+ Adicionar pessoa</button>
+  </div>
+
+  <div id="blocoHorariosGrupo" class="full hidden">
+    <div class="grid">
+      <div>
+        <label>Início</label>
+        <select id="grupoInicio"></select>
+      </div>
+      <div><label>Fim</label><select id="grupoFim"></select></div>
+    </div>
+    
+    <div id="mensagemHorariosGrupo" class="small"></div></div>
+    
+    <div class="full">
+      <label>Motivo</label>
+      <textarea id="editMotivo" required></textarea></div>
+      <div><label>Status</label>
+        <select id="editStatus">
+          <option value="pedido_pendente">Pendente</option>
+          <option value="no_paco">No Paço</option>
+          <option value="pedido_atendido">Atendido</option>
+          <option value="cancelado">Cancelado</option>
+        </select></div>
+        <div>
+          <label>Tratativa <span class="small">(obrigatória ao concluir)</span></label>
+          <textarea id="editTratativa" placeholder="Descreva a conclusão do atendimento"></textarea></div>
+        </div>
+        
+        <div class="acoes-modal">
+          <button type="button" id="fecharAtendimento" class="sec">Voltar</button>
+          <button type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<div class="modal-backdrop" id="modalUsuario"><div class="modal"><h3 id="tituloUsuario">Criar usuário</h3><form id="formUsuario"><input type="hidden" id="usuarioId"><div class="grid"><div><label>Nome</label><input id="usuarioNome" required></div><div><label>E-mail</label><input id="usuarioEmail" type="email" required></div><div><label>Perfil</label><select id="usuarioPapel"><option value="visualizador">Balconista</option><option value="admin">Administrador</option></select></div><div><label>Senha</label><input id="usuarioSenha" type="password" minlength="6" placeholder="Mínimo 6 caracteres"></div></div><div id="msgUsuarioForm"></div><div class="acoes-modal"><button type="button" id="fecharUsuario" class="sec">Voltar</button><button type="submit">Salvar</button></div></form></div></div>
+
+<div class="modal-backdrop" id="modalCidadao">
+  <div class="modal">
+    <h3>Conta do cidadão</h3>
+    <div id="detalheCidadao"></div>
+    <hr>
+    <h4>Alterar senha</h4>
+    <form id="formSenha">
+      <input type="hidden" id="senhaCidadaoId">
+      <input id="novaSenha" type="password" minlength="6" placeholder="Nova senha" required>
+      <button type="submit">Alterar senha</button>
+    </form>
+    <div id="msgSenha"></div><hr><h4>Agendamentos</h4><div id="agendamentosCidadao"></div><div class="acoes-modal"><button type="button" id="fecharCidadao" class="sec">Fechar</button></div></div></div>
+
+<script>
+const HORARIOS=['09:00','09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+const STATUS={cancelado:'Cancelado',pedido_nao_atendido:'Não atendido',pedido_atendido:'Atendido',pedido_pendente:'Pendente'};
+const ATEND={no_paco:'No Paço',marcado:'Online'};
+let papel='',cache=[];
+let timer=null;
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const br=v=>{
+if(!v)return '';
+const [a,m,d]=String(v).slice(0,10).split('-');
+return d+'/'+m+'/'+a;
+};
+
+async function verificar(){
+  const r=await fetch('/api/admin/me');
+  if(!r.ok){
+  location.href='/login.html';
+  return false;
+}
+  const d=await r.json();
+
+  papel=d.papel;
+  $('perfil').textContent=papel==='admin'?'Administrador':'Balconista';
+  if(papel!=='admin'){
+    document.querySelectorAll('.admin-only').forEach(x=>x.remove());
+    $('abaPendencias')?.remove();
+  }return true;}
+
+function mostrarAba(nome){['Atendimentos','Pendencias','Usuarios','Cidadaos'].forEach(x=>$('painel'+x)?.classList.add('hidden'));
+$('painel'+nome).classList.remove('hidden');
+document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('ativo'));
+const b=$('aba'+nome);
+if(b)b.classList.add('ativo');
+}
+
+function preencherHorarios(sel){$('editHorario').innerHTML=HORARIOS.map(h=>`<option value="${h}" ${h===sel?'selected':''}>${h}</option>`).join('');}
+function montarSelectsGrupo(inicio='',fim='',ocupados=[]){
+  const ocup=new Set(ocupados);
+  const disponiveis=HORARIOS.filter(h=>!ocup.has(h));
+  const mk=(valor)=>disponiveis.map(h=>`<option value="${h}" ${h===valor?'selected':''}>${h}</option>`).join('');
+  $('grupoInicio').innerHTML=mk(inicio||disponiveis[0]||'');
+  $('grupoFim').innerHTML=mk(fim||disponiveis[Math.min(1,disponiveis.length-1)]||'');
+  atualizarFimGrupo();
+}
+function atualizarFimGrupo(){
+  const inicio=$('grupoInicio').value;
+  const i=HORARIOS.indexOf(inicio);
+  const ocupados=window.horariosOcupadosGrupo||new Set();
+  const opcoes=HORARIOS.slice(i+1).filter(h=>!ocupados.has(h));
+  $('grupoFim').innerHTML=opcoes.map(h=>`<option value="${h}">${h}</option>`).join('');
+  $('mensagemHorariosGrupo').textContent=opcoes.length?'Escolha quando o atendimento termina. Todos os blocos entre início e fim serão reservados.':'Não há horário disponível após o início escolhido.';
+}
+async function carregarHorariosGrupo(data, inicio='', fim=''){
+  window.horariosOcupadosGrupo=new Set();
+  if(!data){montarSelectsGrupo(inicio,fim,[]);return;}
+  try{
+    const r=await fetch('/api/admin/horarios?data='+encodeURIComponent(data));
+    const x=await r.json();
+    if(!r.ok)throw Error(x.mensagem);
+    window.horariosOcupadosGrupo=new Set(x.horariosOcupados||[]);
+    montarSelectsGrupo(inicio,fim,[...window.horariosOcupadosGrupo]);
+  }catch(e){$('mensagemHorariosGrupo').textContent=e.message;montarSelectsGrupo('', '', []);}
+}
+function blocosEntre(inicio,fim){
+  const a=HORARIOS.indexOf(inicio),b=HORARIOS.indexOf(fim);
+  if(a<0||b<0||b<=a)return [];
+  return HORARIOS.slice(a,b);
+}
+function adicionarParticipante(nome='',telefone='',principal=false){
+  const wrap=document.createElement('div');wrap.className='participante';
+  wrap.innerHTML=`<div style="flex:1"><span class="principal">${principal?'REPRESENTANTE PRINCIPAL':'PARTICIPANTE'}</span><input class="pNome" maxlength="150" placeholder="Nome completo" value="${esc(nome)}" required></div>${principal?'<div style="flex:0 0 220px"><label>Telefone</label><input class="pTelefone" maxlength="30" placeholder="Telefone" value="'+esc(telefone)+'"></div>':'<div><button type="button" class="danger removerParticipante">Remover</button></div>'}`;
+  wrap.querySelector('.removerParticipante')?.addEventListener('click',()=>wrap.remove());
+  $('participantes').appendChild(wrap);
+}
+async function carregarDetalhesGrupo(id){try{const r=await fetch('/api/admin/agendamentos/'+id+'/detalhes');const x=await r.json();if(!r.ok)throw Error(x.mensagem);return x;}catch(e){alert(e.message);return {participantes:[],blocos:[]};}}
+async function abrirModalAtendimento(a=null){
+  const grupo=a?.tipo_atendimento==='grupo';
+  $('tituloAtendimento').textContent=a?'Gerenciar atendimento':'Novo atendimento';
+  $('editId').value=a?.id||'';
+  $('editNome').value=a?.nome||'';
+  $('editEmail').value=a?.email||'';
+  $('editAtendimento').value=a?.atendimento||'no_paco';
+  $('editData').value=a?.data?.slice(0,10)||new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
+  $('editMotivo').value=a?.motivo||'';
+  $('editStatus').value=a?.status||'pedido_pendente';
+  $('editTratativa').value=a?.tratativa||'';
+  $('editTipo').value=grupo?'grupo':'unico';
+  $('participantes').innerHTML='';
+  let det={participantes:[],blocos:[]};
+  if(grupo&&a?.id)det=await carregarDetalhesGrupo(a.id);
+  if(grupo){
+    adicionarParticipante(det.participantes[0]?.nome||a?.nome||'',det.participantes[0]?.telefone||a?.telefone||'',true);
+    det.participantes.slice(1).forEach(p=>adicionarParticipante(p.nome,'',false));
+  }else{
+    // No atendimento único, os dados ficam no bloco principal do formulário.
+  }
+  preencherHorarios(a?.horario?.slice(0,5)||HORARIOS[0]);
+  aplicarModoGrupo(grupo);
+  $('modalAtendimento').classList.add('aberto');
+  if(grupo){
+    const blocos=det.blocos||[];
+    const inicio=blocos[0]||HORARIOS[0];
+    const fim=blocos.length?HORARIOS[HORARIOS.indexOf(blocos[blocos.length-1])+1]:HORARIOS[1];
+    await carregarHorariosGrupo($('editData').value,inicio,fim);
+  }
+}
+function aplicarModoGrupo(grupo){
+  $('editTipo').value=grupo?'grupo':'unico';
+  $('toggleGrupo').textContent=grupo?'Atendimento único':'Atendimento em grupo';
+  $('blocoGrupo').classList.toggle('hidden',!grupo);
+  $('blocoHorariosGrupo').classList.toggle('hidden',!grupo);
+  $('campoHorario').classList.toggle('hidden',grupo);
+  $('campoEmail').classList.toggle('hidden',grupo);
+  $('campoNome').classList.toggle('hidden',grupo);
+  $('editNome').required=!grupo;
+  $('editEmail').required=!grupo;
+  $('editNome').disabled=grupo;
+  $('editEmail').disabled=grupo;
+  $('editHorario').disabled=grupo;
+  $('editData').required=true;
+  $('editMotivo').required=true;
+  $('grupoInicio').required=grupo;
+  $('grupoFim').required=grupo;
+  const edicao=Boolean($('editId').value);
+  $('editStatus').closest('div')?.classList.toggle('hidden',!edicao);
+  $('editTratativa').closest('div')?.classList.toggle('hidden',!edicao);
+  $('editStatus').required=false;
+  $('editTratativa').required=false;
+  if(grupo){
+    $('editNome').value='';
+    $('editEmail').value='';
+  }
+}
+
+function fecharModal(id){$(id).classList.remove('aberto');}
+async function carregar(){const p=new URLSearchParams(),b=$('busca').value.trim(),d=$('filtroData').value,s=$('filtroStatus').value,a=$('filtroAtendimento').value;if(b)p.set('busca',b);if(d)p.set('data',d);if(s)p.set('status',s);if(a)p.set('atendimento',a);const m=$('mensagem');m.textContent='';try{const r=await fetch('/api/admin/agendamentos?'+p);const x=await r.json();if(!r.ok)throw Error(x.mensagem);cache=x.agendamentos||[];$('tabela').innerHTML=cache.length?cache.map(a=>`<tr class="${a.tipo_atendimento==='grupo'?'grupo-row':''}"><td>${br(a.data)}</td><td>${esc(a.horario)}${a.tipo_atendimento==='grupo'?'<br><span class="small">'+(a.horario? 'início':'')+'</span>':''}</td><td><span class="tag ${a.tipo_atendimento==='grupo'?'grupo-tag':''}">${a.tipo_atendimento==='grupo'?'GRUPO':esc(ATEND[a.atendimento]||a.atendimento)}</span></td><td><b>${esc(a.nome)}</b>${a.tipo_atendimento==='grupo'?`<br><span class="small">${a.participantes_total||'Várias'} pessoas</span>`:''}</td><td>${esc(a.telefone||'')}</td><td>${esc(a.motivo||'')}</td><td>${esc(a.tratativa||'—')}</td><td class="status">${esc(STATUS[a.status]||a.status)}</td><td>${papel==='admin'?`<button onclick="editar(${a.id})">Gerenciar</button>`:''}</td></tr>`).join(''):'<tr><td colspan="9" class="vazio">Nenhum atendimento encontrado.</td></tr>';}catch(e){m.textContent=e.message;m.className='erro';}}
+
+function editar(id){const a=cache.find(x=>x.id===id);if(a)abrirModalAtendimento(a);}
+async function excluirAtendimento(id){if(!confirm('Excluir este atendimento? Esta ação não pode ser desfeita.'))return;try{const r=await fetch('/api/admin/agendamentos/'+id,{method:'DELETE'});const x=await r.json();if(!r.ok)throw Error(x.mensagem);carregar();}catch(e){alert(e.message);}}
+async function salvarAtendimento(e){
+  e.preventDefault();
+  const id=$('editId').value;
+  const grupo=$('editTipo').value==='grupo';
+  if(!document.getElementById('formAtendimento').checkValidity()){
+    document.getElementById('formAtendimento').reportValidity();
+    return;
+  }
+  const participantes=grupo?[...document.querySelectorAll('#participantes .participante')].map(p=>({nome:p.querySelector('.pNome').value.trim(),telefone:p.querySelector('.pTelefone')?.value.trim()||''})):[];
+  if(grupo && (!participantes.length || participantes.some(p=>!p.nome))){alert('Preencha o nome de todos os participantes antes de salvar.');return;}
+  const blocos=grupo?blocosEntre($('grupoInicio').value,$('grupoFim').value):[];
+  if(grupo && !blocos.length){alert('Escolha um início e um fim válidos.');return;}
+  const dados={
+    nome:grupo?(participantes[0]?.nome||''):$('editNome').value.trim(),
+    telefone:grupo?(participantes[0]?.telefone||''):'',
+    email:grupo?'':$('editEmail').value.trim(),
+    atendimento:$('editAtendimento').value,
+    data:$('editData').value,
+    horario:grupo?blocos[0]:$('editHorario').value,
+    motivo:$('editMotivo').value.trim(),
+    status:$('editStatus').value,
+    tratativa:$('editTratativa').value.trim(),
+    tipo_atendimento:grupo?'grupo':'unico',
+    participantes,
+    blocos
+  };
+  try{
+    const r=await fetch(id?'/api/admin/agendamentos/'+id:'/api/admin/agendamentos',{method:id?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+    const x=await r.json();
+    if(!r.ok)throw Error(x.mensagem);
+    fecharModal('modalAtendimento');
+    mostrarAba('Atendimentos');
+    carregar();
+  }catch(e){alert(e.message);}
+}
+
+async function carregarPendencias(){
+  const r=await fetch('/api/admin/pendencias');
+  const x=await r.json();
+  if(!r.ok){$('msgPendencias').textContent=x.mensagem;return;
+
+  }
+  $('tabelaPendencias').innerHTML=x.agendamentos.length?x.agendamentos.map(a=>`<tr><td>${br(a.data)}</td><td>${esc(a.horario)}</td><td>${esc(a.nome)}</td><td>${esc(a.telefone||'')}</td><td>${esc(a.motivo||'')}</td><td>${esc(STATUS[a.status])}</td><td><button onclick="editarPendente(${a.id})">Gerenciar</button></td></tr>`).join(''):'<tr><td colspan="7" class="vazio">Nenhuma pendência.</td></tr>';cache=x.agendamentos;
+}
+function editarPendente(id){
+  const a=cache.find(x=>x.id===id);
+  if(a)abrirModalAtendimento(a);
+}
+
+async function carregarUsuarios(){
+  if(papel!=='admin')return;
+  const r=await fetch('/api/admin/usuarios'),
+  x=await r.json();
+  
+  if(!r.ok){$('msgUsuarios').textContent=x.mensagem;return;}$('tabelaUsuarios').innerHTML=x.usuarios.length?x.usuarios.map(u=>`<tr><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${u.papel==='admin'?'Administrador':'Balconista'}</td><td>${esc(u.criado_em)}</td><td><button onclick='editarUsuario(${JSON.stringify(u)})'>Editar</button><button class="danger" onclick='excluirUsuario(${u.id})'>Excluir</button></td></tr>`).join(''):'<tr><td colspan="5" class="vazio">Nenhum usuário adicional.</td></tr>';}
+
+function abrirUsuario(u=null){
+  $('tituloUsuario').textContent=u?'Editar usuário':'Criar usuário';$('usuarioId').value=u?.id||'';$('usuarioNome').value=u?.nome||'';$('usuarioEmail').value=u?.email||'';$('usuarioEmail').disabled=!!u;$('usuarioPapel').value=u?.papel||'visualizador';$('usuarioSenha').value='';$('usuarioSenha').required=!u;$('msgUsuarioForm').textContent='';$('modalUsuario').classList.add('aberto');
+}
+function editarUsuario(u){
+  abrirUsuario(u)
+}
+async function salvarUsuario(e){
+  e.preventDefault();
+  const id=$('usuarioId').value,d={nome:$('usuarioNome').value.trim(),email:$('usuarioEmail').value.trim(),papel:$('usuarioPapel').value,senha:$('usuarioSenha').value
+  };
+  try{
+    const r=await fetch(id?'/api/admin/usuarios/'+id:'/api/admin/usuarios',{method:id?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+    const x=await r.json();
+    if(!r.ok)throw Error(x.mensagem);
+    fecharModal('modalUsuario');
+    carregarUsuarios();
+  }
+  catch(e){
+    $('msgUsuarioForm').textContent=e.message;$('msgUsuarioForm').className='erro';
+  }
+}
+async function excluirUsuario(id){
+  if(!confirm('Excluir este usuário do painel?'))return;const r=await fetch('/api/admin/usuarios/'+id,{method:'DELETE'});const x=await r.json();
+  if(!r.ok)return alert(x.mensagem);carregarUsuarios();
+}
+async function carregarCidadaos(){
+  if(papel!=='admin')return;
+  
+  const b=$('buscaCidadao').value.trim();const r=await fetch('/api/admin/cidadaos?busca='+encodeURIComponent(b));
+  const x=await r.json();
+  
+  if(!r.ok){$('msgCidadaos').textContent=x.mensagem;return;}$('tabelaCidadaos').innerHTML=x.cidadaos.length?x.cidadaos.map(c=>`<tr><td>${esc(c.nome)}</td><td>${esc(c.email)}</td><td>${esc(c.telefone||'')}</td><td>${esc(c.criado_em)}</td><td><button onclick="abrirCidadao(${c.id})">Ver conta</button></td></tr>`).join(''):'<tr><td colspan="5" class="vazio">Nenhum cidadão encontrado.</td></tr>';
+}
+
+async function abrirCidadao(id){
+  const r=await fetch('/api/admin/cidadaos/'+id),x=await r.json();
+  if(!r.ok)return alert(x.mensagem);
+  $('senhaCidadaoId').value=id;
+  $('detalheCidadao').innerHTML=`<div class="card"><b>${esc(x.cidadao.nome)}</b><br>E-mail: ${esc(x.cidadao.email)}<br>Telefone: ${esc(x.cidadao.telefone||'—')}<br>Cadastro: ${esc(x.cidadao.criado_em)}</div>`;$('agendamentosCidadao').innerHTML=x.agendamentos.length?x.agendamentos.map(a=>`<div class="card"><b>${esc(a.data_br)} às ${esc(a.horario)}</b><br>${esc(a.motivo||'—')}<br>Status: <b>${esc(STATUS[a.status])}</b> · Atendimento: ${esc(ATEND[a.atendimento])}<br>Tratativa: ${esc(a.tratativa||'—')}</div>`).join(''):'<p>Nenhum agendamento.</p>';$('msgSenha').textContent='';$('novaSenha').value='';$('modalCidadao').classList.add('aberto');
+}
+
+async function alterarSenha(e){
+  e.preventDefault();const id=$('senhaCidadaoId').value;const r=await fetch('/api/admin/cidadaos/'+id+'/senha',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({senha:$('novaSenha').value})});const x=await r.json();$('msgSenha').textContent=x.mensagem||'Senha alterada com sucesso.';if(!r.ok)$('msgSenha').className='erro';else $('msgSenha').className='sucesso';if(r.ok)$('novaSenha').value='';
+}
+
+$('abaAtendimentos').onclick=()=>{
+  mostrarAba('Atendimentos');
+  carregar()};
+  
+  $('abaPendencias').onclick=()=>{mostrarAba('Pendencias');
+  carregarPendencias()};
+  
+  $('abaUsuarios')?.addEventListener('click',()=>{mostrarAba('Usuarios');
+  carregarUsuarios()});
+  
+  $('abaCidadaos')?.addEventListener('click',()=>{mostrarAba('Cidadaos');carregarCidadaos()});
+  
+  $('novoAtendimento').onclick=()=>abrirModalAtendimento();
+  
+  $('toggleGrupo').onclick=async()=>{const g=$('editTipo').value!=='grupo';if(g){$('participantes').innerHTML='';adicionarParticipante('', '', true);}aplicarModoGrupo(g);if(g)await carregarHorariosGrupo($('editData').value);};
+    
+  $('adicionarParticipante').onclick=()=>adicionarParticipante('', '', false);
+  
+  $('fecharAtendimento').onclick=()=>fecharModal('modalAtendimento');
+  
+  $('formAtendimento').onsubmit=salvarAtendimento;
+  
+  $('novoUsuario')?.addEventListener('click',()=>abrirUsuario());
+  
+  $('fecharUsuario')?.addEventListener('click',()=>fecharModal('modalUsuario'));
+  
+  $('formUsuario')?.addEventListener('submit',salvarUsuario);
+  
+  $('fecharCidadao')?.addEventListener('click',()=>fecharModal('modalCidadao'));
+  
+  $('formSenha')?.addEventListener('submit',alterarSenha);
+  
+  $('buscarCidadao')?.addEventListener('click',carregarCidadaos);
+  
+  $('buscaCidadao')?.addEventListener('keydown',e=>{if(e.key==='Enter')carregarCidadaos()});
+  
+  $('busca').addEventListener('input',()=>{clearTimeout(timer);
+  
+  timer=setTimeout(carregar,250)});
+    
+  $('filtroData').addEventListener('change',carregar);
+  
+  $('filtroAtendimento').addEventListener('change',carregar);
+  
+  $('filtroStatus').addEventListener('change',carregar);
+  
+  $('editData').addEventListener('change',()=>{if($('editTipo').value==='grupo')carregarHorariosGrupo($('editData').value);});
+  
+  $('grupoInicio').addEventListener('change',atualizarFimGrupo);
+  
+  $('sair').onclick=async()=>{await fetch('/api/logout',{method:'POST'});location.href='/login.html'};
+
+verificar().then(ok=>{if(ok)carregar();});
+</script>
+</body></html>

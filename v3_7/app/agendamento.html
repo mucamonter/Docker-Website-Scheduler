@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Novo atendimento</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="container">
+<div class="top">  <div class="left-top">
+    <img src="../images.jpg" alt="Logo"></div>
+    <div class="center-top"><h2>Novo atendimento</h2></div>
+
+</div>
+<p id="boasVindas">Carregando seus dados...</p>
+<form id="formAgendamento">
+  <label for="motivo">Motivo do atendimento:</label><textarea id="motivo" rows="4" required placeholder="Descreva brevemente o assunto..."></textarea>
+  <label for="data">Data desejada:</label><input type="date" id="data" required>
+  <label for="horario">Horário:</label><select id="horario" required><option value="">Selecione uma data primeiro</option></select>
+  <button type="submit">Confirmar atendimento</button><div id="mensagem"></div>
+  </form><hr><button type="button" onclick="location.href='/cidadao.html'">Voltar</button>
+</div>
+
+
+<script>
+  const form=document.getElementById('formAgendamento'),data=document.getElementById('data'),horario=document.getElementById('horario');
+  data.min=new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
+
+
+function preencher(h){
+    horario.innerHTML='<option value="">Selecione um horário</option>'+h.map(x=>`<option value="${x}">${x}</option>`).join('');
+}
+
+
+async function carregarConta(){
+    const r=await fetch('/api/cidadao/me');
+    if(r.status===401){location.href='/login.html';return false;}
+    const x=await r.json();if(!r.ok){alert(x.mensagem||'Não foi possível carregar sua conta.');return false;}document.getElementById('boasVindas').textContent='Olá, '+x.cidadao.nome+'. Escolha somente a data e o horário do atendimento.';return true;
+}
+
+async function atualizar(){
+    if(!data.value)return;
+    const d=new Date(data.value+'T00:00:00');
+    if([0,6].includes(d.getDay())){alert('Atendimento apenas em dias úteis.');
+    data.value='';
+    preencher([]);return;
+    }
+
+    try{const r=await fetch('/api/agendamentos/disponiveis?data='+encodeURIComponent(data.value));
+    const x=await r.json();if(!r.ok)throw Error(x.mensagem);
+    preencher(x.horariosDisponiveis||[]);}catch(e){preencher([]);alert(e.message);}}
+data.addEventListener('change',atualizar);
+form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    
+    if(!data.value||!horario.value)return alert('Selecione a data e o horário.');
+    try{const r=await fetch('/api/agendamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({motivo:document.getElementById('motivo').value.trim(),data:data.value,horario:horario.value})});
+    
+    const x=await r.json();if(!r.ok)throw Error(x.mensagem);document.getElementById('mensagem').className='sucesso';document.getElementById('mensagem').textContent='Pedido registrado com sucesso.';form.reset();preencher([]);}catch(e){alert(e.message);}});
+carregarConta();
+</script></body></html>
