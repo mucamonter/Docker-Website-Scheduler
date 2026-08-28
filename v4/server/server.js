@@ -308,7 +308,7 @@ app.get('/api/admin/pendencias',exigirAdmin,async(req,res)=>{
 });
 
 app.post('/api/admin/agendamentos',exigirAdmin,async(req,res)=>{
-  const nome=texto(req.body.nome),email=texto(req.body.email).toLowerCase(),telefone=texto(req.body.telefone),motivo=texto(req.body.motivo),data=texto(req.body.data),horario=texto(req.body.horario),atendimento=valorAtendimento(texto(req.body.atendimento))||'no_paco',tipo=valorTipo(texto(req.body.tipo_atendimento))||'unico';
+  const nome=texto(req.body.nome),email=texto(req.body.email).toLowerCase(),telefone=texto(req.body.telefone),endereco=texto(req.body.endereco),motivo=texto(req.body.motivo),data=texto(req.body.data),horario=texto(req.body.horario),atendimento=valorAtendimento(texto(req.body.atendimento))||'no_paco',tipo=valorTipo(texto(req.body.tipo_atendimento))||'unico';
   const participantes=normalizarParticipantes(req.body.participantes);
   const blocos=blocosValidos(req.body.blocos);
   if(!nome||!motivo||!data)return res.status(400).json({mensagem:'Nome, motivo e data são obrigatórios.'});
@@ -320,7 +320,7 @@ app.post('/api/admin/agendamentos',exigirAdmin,async(req,res)=>{
   const conn=await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [r]=await conn.execute("INSERT INTO agendamentos (nome,email,telefone,motivo,data,horario,status,atendimento,tipo_atendimento,blocos_json) VALUES (?,?,?,?,?,?, 'pedido_pendente', ?, ?, ?)",[nome,email||null,telefone||null,motivo,data,`${(tipo==='grupo'?blocos[0]:horario)}:00`,atendimento,tipo,tipo==='grupo'?JSON.stringify(blocos):null]);
+    const [r]=await conn.execute("INSERT INTO agendamentos (nome,email,telefone,endereco,motivo,data,horario,status,atendimento,tipo_atendimento,blocos_json) VALUES (?,?,?,?,?,?,?,'pedido_pendente', ?, ?, ?)",[nome,email||null,telefone||null,endereco||null,motivo,data,`${(tipo==='grupo'?blocos[0]:horario)}:00`,atendimento,tipo,tipo==='grupo'?JSON.stringify(blocos):null]);
     const slots=tipo==='grupo'?blocos:[horario];
     for(const h of slots) await conn.execute('INSERT INTO agendamento_slots (agendamento_id,data,horario_inicio) VALUES (?,?,?)',[r.insertId,data,`${h}:00`]);
     if(tipo==='grupo'){
@@ -331,7 +331,7 @@ app.post('/api/admin/agendamentos',exigirAdmin,async(req,res)=>{
 });
 
 app.patch('/api/admin/agendamentos/:id',exigirAdmin,async(req,res)=>{
-  const id=Number(req.params.id),nome=texto(req.body.nome),email=texto(req.body.email),telefone=texto(req.body.telefone),motivo=texto(req.body.motivo),data=texto(req.body.data),horario=texto(req.body.horario),status=valorStatus(texto(req.body.status)),atendimento=valorAtendimento(texto(req.body.atendimento)),tratativa=texto(req.body.tratativa),tipo=valorTipo(texto(req.body.tipo_atendimento))||'unico';
+  const id=Number(req.params.id),nome=texto(req.body.nome),email=texto(req.body.email),telefone=texto(req.body.telefone),endereco=texto(req.body.endereco),motivo=texto(req.body.motivo),data=texto(req.body.data),horario=texto(req.body.horario),status=valorStatus(texto(req.body.status)),atendimento=valorAtendimento(texto(req.body.atendimento)),tratativa=texto(req.body.tratativa),tipo=valorTipo(texto(req.body.tipo_atendimento))||'unico';
   const participantes=normalizarParticipantes(req.body.participantes),blocos=blocosValidos(req.body.blocos);
   if(!Number.isInteger(id)||id<1)return res.status(400).json({mensagem:'ID inválido.'});
   if(!nome||!motivo||!data||!status||!atendimento)return res.status(400).json({mensagem:'Preencha os dados obrigatórios.'});
@@ -341,7 +341,7 @@ app.patch('/api/admin/agendamentos/:id',exigirAdmin,async(req,res)=>{
   const conn=await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [r]=await conn.execute('UPDATE agendamentos SET nome=?,email=?,telefone=?,motivo=?,data=?,horario=?,status=?,atendimento=?,tipo_atendimento=?,blocos_json=?,tratativa=? WHERE id=?',[nome,email||null,telefone||null,motivo,data,`${(tipo==='grupo'?blocos[0]:horario)}:00`,status,atendimento,tipo,tipo==='grupo'?JSON.stringify(blocos):null,status==='pedido_atendido'?tratativa:null,id]);
+    const [r]=await conn.execute('UPDATE agendamentos SET nome=?,email=?,telefone=?,endereco=?,motivo=?,data=?,horario=?,status=?,atendimento=?,tipo_atendimento=?,blocos_json=?,tratativa=? WHERE id=?',[nome,email||null,telefone||null,endereco||null,motivo,data,`${(tipo==='grupo'?blocos[0]:horario)}:00`,status,atendimento,tipo,tipo==='grupo'?JSON.stringify(blocos):null,status==='pedido_atendido'?tratativa:null,id]);
     if(!r.affectedRows){await conn.rollback();return res.status(404).json({mensagem:'Atendimento não encontrado.'});}
     await conn.execute('DELETE FROM agendamento_slots WHERE agendamento_id=?',[id]);
     if(status!=='cancelado'){for(const h of (tipo==='grupo'?blocos:[horario])) await conn.execute('INSERT INTO agendamento_slots (agendamento_id,data,horario_inicio) VALUES (?,?,?)',[id,data,`${h}:00`]);}

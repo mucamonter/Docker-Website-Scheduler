@@ -332,7 +332,7 @@ tr:hover td {
     <style>
     </style>
     <div id="mensagem"></div>
-    <div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Atendimentos Salvos</th><th>Cidadão / Grupo</th><th>Telefone</th><th>Motivo</th><th>Tratativa</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tabela"></tbody></table></div>
+    <div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Atendimentos Salvos</th><th>Cidadão / Grupo</th><th>Telefone</th><th>Endereço</th><th>Motivo</th><th>Tratativa</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tabela"></tbody></table></div>
   </section>
 
   <section id="painelPendencias" class="painel hidden">
@@ -366,9 +366,13 @@ tr:hover td {
   <label>Nome</label>
   <input id="editNome" required>
   </div>
-  <div id="campoEmail">
-    <label>E-mail</label>
-    <input id="editEmail" type="email">
+  <div id="campoTelefone">
+    <label>Telefone</label>
+    <input id="editTelefone" type="number">
+  </div>
+  <div id="campoEndereco">
+    <label>Endereço</label>
+    <input id="editEndereco" maxlength="255">
   </div>
   <div>
   <label>Atendimento</label>
@@ -539,7 +543,8 @@ async function abrirModalAtendimento(a=null){
   $('tituloAtendimento').textContent=a?'Gerenciar atendimento':'Novo atendimento';
   $('editId').value=a?.id||'';
   $('editNome').value=a?.nome||'';
-  $('editEmail').value=a?.email||'';
+  $('editTelefone').value=a?.telefone||'';
+  $('editEndereco').value=a?.endereco||'';
   $('editAtendimento').value=a?.atendimento||'no_paco';
   $('editData').value=a?.data?.slice(0,10)||new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
   $('editMotivo').value=a?.motivo||'';
@@ -571,12 +576,12 @@ function aplicarModoGrupo(grupo){
   $('blocoGrupo').classList.toggle('hidden',!grupo);
   $('blocoHorariosGrupo').classList.toggle('hidden',!grupo);
   $('campoHorario').classList.toggle('hidden',grupo);
-  $('campoEmail').classList.toggle('hidden',grupo);
+  $('campoTelefone').classList.toggle('hidden',grupo);
   $('campoNome').classList.toggle('hidden',grupo);
   $('editNome').required=!grupo;
-  $('editEmail').required=!grupo;
+  $('editTelefone').required=!grupo;
   $('editNome').disabled=grupo;
-  $('editEmail').disabled=grupo;
+  $('editTelefone').disabled=grupo;
   $('editHorario').disabled=grupo;
   $('editData').required=true;
   $('editMotivo').required=true;
@@ -589,12 +594,12 @@ function aplicarModoGrupo(grupo){
   $('editTratativa').required=false;
   if(grupo){
     $('editNome').value='';
-    $('editEmail').value='';
+    $('editTelefone').value='';
   }
 }
 
 function fecharModal(id){$(id).classList.remove('aberto');}
-async function carregar(){const p=new URLSearchParams(),b=$('busca').value.trim(),d=$('filtroData').value,s=$('filtroStatus').value,a=$('filtroAtendimento').value;if(b)p.set('busca',b);if(d)p.set('data',d);if(s)p.set('status',s);if(a)p.set('atendimento',a);const m=$('mensagem');m.textContent='';try{const r=await fetch('/api/admin/agendamentos?'+p);const x=await r.json();if(!r.ok)throw Error(x.mensagem);cache=x.agendamentos||[];$('tabela').innerHTML=cache.length?cache.map(a=>`<tr class="${a.tipo_atendimento==='grupo'?'grupo-row':''}"><td>${br(a.data)}</td><td>${esc(a.horario)}${a.tipo_atendimento==='grupo'?'<br><span class="small">'+(a.horario? 'início':'')+'</span>':''}</td><td><span class="tag ${a.tipo_atendimento==='grupo'?'grupo-tag':''}">${a.tipo_atendimento==='grupo'?'GRUPO':esc(ATEND[a.atendimento]||a.atendimento)}</span></td><td><b>${esc(a.nome)}</b>${a.tipo_atendimento==='grupo'?`<br><span class="small">${a.participantes_total||'Várias'} pessoas</span>`:''}</td><td>${esc(a.telefone||'')}</td><td>${esc(a.motivo||'')}</td><td>${esc(a.tratativa||'—')}</td><td class="status">${esc(STATUS[a.status]||a.status)}</td><td>${papel==='admin'?`<button onclick="editar(${a.id})">Gerenciar</button>`:''}</td></tr>`).join(''):'<tr><td colspan="9" class="vazio">Nenhum atendimento encontrado.</td></tr>';}catch(e){m.textContent=e.message;m.className='erro';}}
+async function carregar(){const p=new URLSearchParams(),b=$('busca').value.trim(),d=$('filtroData').value,s=$('filtroStatus').value,a=$('filtroAtendimento').value;if(b)p.set('busca',b);if(d)p.set('data',d);if(s)p.set('status',s);if(a)p.set('atendimento',a);const m=$('mensagem');m.textContent='';try{const r=await fetch('/api/admin/agendamentos?'+p);const x=await r.json();if(!r.ok)throw Error(x.mensagem);cache=x.agendamentos||[];$('tabela').innerHTML=cache.length?cache.map(a=>`<tr class="${a.tipo_atendimento==='grupo'?'grupo-row':''}"><td>${br(a.data)}</td><td>${esc(a.horario)}${a.tipo_atendimento==='grupo'?'<br><span class="small">'+(a.horario? 'início':'')+'</span>':''}</td><td><span class="tag ${a.tipo_atendimento==='grupo'?'grupo-tag':''}">${a.tipo_atendimento==='grupo'?'GRUPO':esc(ATEND[a.atendimento]||a.atendimento)}</span></td><td><b>${esc(a.nome)}</b>${a.tipo_atendimento==='grupo'?`<br><span class="small">${a.participantes_total||'Várias'} pessoas</span>`:''}</td><td>${esc(a.telefone||'')}</td><td>${esc(a.endereco||'')}</td><td>${esc(a.motivo||'')}</td><td>${esc(a.tratativa||'—')}</td><td class="status">${esc(STATUS[a.status]||a.status)}</td><td>${papel==='admin'?`<button onclick="editar(${a.id})">Gerenciar</button>`:''}</td></tr>`).join(''):'<tr><td colspan="10" class="vazio">Nenhum atendimento encontrado.</td></tr>';}catch(e){m.textContent=e.message;m.className='erro';}}
 
 function editar(id){const a=cache.find(x=>x.id===id);if(a)abrirModalAtendimento(a);}
 async function excluirAtendimento(id){if(!confirm('Excluir este atendimento? Esta ação não pode ser desfeita.'))return;try{const r=await fetch('/api/admin/agendamentos/'+id,{method:'DELETE'});const x=await r.json();if(!r.ok)throw Error(x.mensagem);carregar();}catch(e){alert(e.message);}}
@@ -612,8 +617,9 @@ async function salvarAtendimento(e){
   if(grupo && !blocos.length){alert('Escolha um início e um fim válidos.');return;}
   const dados={
     nome:grupo?(participantes[0]?.nome||''):$('editNome').value.trim(),
-    telefone:grupo?(participantes[0]?.telefone||''):'',
-    email:grupo?'':$('editEmail').value.trim(),
+    telefone:grupo?(participantes[0]?.telefone||''):$('editTelefone').value.trim(),
+    endereco:$('editEndereco').value.trim(),
+    email:'',
     atendimento:$('editAtendimento').value,
     data:$('editData').value,
     horario:grupo?blocos[0]:$('editHorario').value,
