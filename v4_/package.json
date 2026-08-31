@@ -1,0 +1,16 @@
+{
+  "name": "v2",
+  "version": "1.0.0",
+  "description": "Sistema de agendamento com MySQL",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "mysql2": "^3.14.3"
+  }
+}
