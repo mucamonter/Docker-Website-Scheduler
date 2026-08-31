@@ -121,7 +121,11 @@ async function prepararBanco() {
   ) ENGINE=InnoDB`);
 
   try {
-    await pool.query('ALTER TABLE agendamento_slots DROP INDEX uk_agenda_slot');
+    const [idxs] = await pool.query("SHOW INDEX FROM agendamento_slots WHERE Key_name IN ('uk_agenda_slot','agenda_slot')");
+    const nomes = [...new Set((idxs || []).map(i => i.Key_name).filter(Boolean))];
+    for (const nome of nomes) {
+      await pool.query(`ALTER TABLE agendamento_slots DROP INDEX \`${nome}\``);
+    }
   } catch (e) {
     if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
   }
