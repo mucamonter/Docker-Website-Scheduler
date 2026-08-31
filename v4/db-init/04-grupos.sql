@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS agendamento_slots (
  agendamento_id INT UNSIGNED NOT NULL,
  data DATE NOT NULL,
  horario_inicio TIME NOT NULL,
- PRIMARY KEY (id), UNIQUE KEY uk_agenda_slot (data, horario_inicio), INDEX idx_slot_agendamento (agendamento_id),
+ PRIMARY KEY (id), INDEX idx_agenda_slot_data_hora (data, horario_inicio), INDEX idx_slot_agendamento (agendamento_id),
  CONSTRAINT fk_slot_agendamento FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

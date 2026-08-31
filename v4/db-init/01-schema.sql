@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS agendamentos (
  endereco VARCHAR(255) NULL,
  data_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
  status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente',
- slot_ativo VARCHAR(40) GENERATED ALWAYS AS (CASE WHEN status <> 'cancelado' THEN CONCAT(data, ' ', horario) ELSE NULL END) STORED,
  PRIMARY KEY (id),
  INDEX idx_agendamento_data (data),
  INDEX idx_agendamento_nome (nome),

@@ -115,10 +115,34 @@ async function prepararBanco() {
     data DATE NOT NULL,
     horario_inicio TIME NOT NULL,
     PRIMARY KEY (id),
-    uk_agenda_slot (data, horario_inicio),
     INDEX idx_slot_agendamento (agendamento_id),
+    INDEX idx_agenda_slot_data_hora (data, horario_inicio),
     CONSTRAINT fk_slot_agendamento FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE CASCADE
   ) ENGINE=InnoDB`);
+
+  try {
+    await pool.query('ALTER TABLE agendamento_slots DROP INDEX uk_agenda_slot');
+  } catch (e) {
+    if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
+  }
+
+  try {
+    const [idx] = await pool.query("SHOW INDEX FROM agendamentos WHERE Key_name = 'uk_agendamento_slot_ativo'");
+    if (Array.isArray(idx) && idx.length) {
+      await pool.query('ALTER TABLE agendamentos DROP INDEX uk_agendamento_slot_ativo');
+    }
+  } catch (e) {
+    if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
+  }
+
+  try {
+    const [col] = await pool.query("SHOW COLUMNS FROM agendamentos LIKE 'slot_ativo'");
+    if (Array.isArray(col) && col.length) {
+      await pool.query('ALTER TABLE agendamentos DROP COLUMN slot_ativo');
+    }
+  } catch (e) {
+    if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
+  }
 
   // Preenche os slots dos atendimentos existentes. Registros cancelados não ocupam horário.
   await pool.query("INSERT IGNORE INTO agendamento_slots (agendamento_id,data,horario_inicio) SELECT id,data,horario FROM agendamentos WHERE status <> 'cancelado'");
@@ -138,11 +162,8 @@ async function prepararBanco() {
     await pool.query("ALTER TABLE agendamentos MODIFY COLUMN status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'");
   }
 
-  if (!(await colunaExiste('agendamentos','slot_ativo'))) {
-    // O projeto original usa a coluna gerada para impedir dupla reserva.
-    await pool.query("ALTER TABLE agendamentos ADD COLUMN slot_ativo VARCHAR(40) GENERATED ALWAYS AS (CASE WHEN status <> 'cancelado' THEN CONCAT(data, ' ', horario) ELSE NULL END) STORED");
-    await pool.query('ALTER TABLE agendamentos ADD UNIQUE KEY uk_agendamento_slot_ativo (slot_ativo)');
-  }
+  // A aplicação agora permite múltiplos atendimentos no mesmo horário. 
+  // Por esse motivo, não há mais uma coluna/índice global de unicidade por slot.
 
   await pool.query(`CREATE TABLE IF NOT EXISTS usuarios_admin (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -234,12 +255,8 @@ app.patch('/api/cidadao/agendamentos/:id/cancelar',exigirCidadao,async(req,res)=
 app.get('/api/agendamentos/disponiveis', async(req,res)=>{
   const data=texto(req.query.data);
   if(!dataValida(data)) return res.status(400).json({mensagem:'Data inválida.'});
-  if(!diaUtil(data)) return res.json({horariosOcupados:HORARIOS,horariosDisponiveis:[]});
-  try {
-    const [rows]=await pool.execute("SELECT TIME_FORMAT(horario_inicio,'%H:%i') horario FROM agendamento_slots WHERE data=?",[data]);
-    const ocup=new Set(rows.map(r=>r.horario));
-    res.json({horariosOcupados:[...ocup],horariosDisponiveis:HORARIOS.filter(h=>!ocup.has(h))});
-  } catch(e) { console.error(e); res.status(500).json({mensagem:'Não foi possível consultar os horários.'}); }
+  if(!diaUtil(data)) return res.json({horariosOcupados:[],horariosDisponiveis:[]});
+  res.json({horariosOcupados:[],horariosDisponiveis:HORARIOS});
 });
 
 app.post('/api/agendamentos',exigirCidadao,async(req,res)=>{
@@ -252,8 +269,6 @@ app.post('/api/agendamentos',exigirCidadao,async(req,res)=>{
     const [c]=await conn.execute('SELECT id,nome,email,telefone FROM cidadaos WHERE id=? LIMIT 1',[req.session.cidadaoId]);
     if(!c.length){await conn.rollback();return res.status(401).json({mensagem:'Conta de cidadão não encontrada.'});}
     const x=c[0];
-    const [ocupado]=await conn.execute('SELECT id FROM agendamento_slots WHERE data=? AND horario_inicio=? FOR UPDATE',[data,`${horario}:00`]);
-    if(ocupado.length){await conn.rollback();return res.status(409).json({mensagem:'Este horário já está reservado. Escolha outro horário.'});}
     const [r]=await conn.execute("INSERT INTO agendamentos (cidadao_id,nome,motivo,data,horario,email,telefone,status,atendimento,tipo_atendimento) VALUES (?,?,?,?,?,?,?,'pedido_pendente','marcado','unico')",[x.id,x.nome,motivo,data,`${horario}:00`,x.email,x.telefone||null]);
     await conn.execute('INSERT INTO agendamento_slots (agendamento_id,data,horario_inicio) VALUES (?,?,?)',[r.insertId,data,`${horario}:00`]);
     await conn.commit();
@@ -273,12 +288,8 @@ function aplicarBuscaAgendamentos(req, isViewer){
 
 app.get('/api/admin/horarios',exigirStaff,async(req,res)=>{
   const data=texto(req.query.data);
-  if(!dataValida(data)||!diaUtil(data)) return res.json({horariosOcupados:HORARIOS,horariosDisponiveis:[]});
-  try{
-    const [rows]=await pool.execute("SELECT TIME_FORMAT(horario_inicio,'%H:%i') horario FROM agendamento_slots WHERE data=?",[data]);
-    const ocup=[...new Set(rows.map(r=>r.horario))];
-    res.json({horariosOcupados:ocup,horariosDisponiveis:HORARIOS.filter(h=>!ocup.includes(h))});
-  }catch(e){console.error(e);res.status(500).json({mensagem:'Não foi possível consultar os horários.'});}
+  if(!dataValida(data)||!diaUtil(data)) return res.json({horariosOcupados:[],horariosDisponiveis:[]});
+  res.json({horariosOcupados:[],horariosDisponiveis:HORARIOS});
 });
 
 app.get('/api/admin/agendamentos',exigirStaff,async(req,res)=>{
