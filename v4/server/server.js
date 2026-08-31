@@ -115,7 +115,7 @@ async function prepararBanco() {
     data DATE NOT NULL,
     horario_inicio TIME NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_agenda_slot (data, horario_inicio),
+    uk_agenda_slot (data, horario_inicio),
     INDEX idx_slot_agendamento (agendamento_id),
     CONSTRAINT fk_slot_agendamento FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE CASCADE
   ) ENGINE=InnoDB`);
