@@ -331,7 +331,7 @@ app.post('/api/admin/agendamentos',exigirAdmin,async(req,res)=>{
   if(tipo==='grupo'){
     if(!participantes.length) return res.status(400).json({mensagem:'Adicione pelo menos o representante do grupo.'});
     if(!blocos.length) return res.status(400).json({mensagem:'Selecione pelo menos um bloco de horário.'});
-  } else if(!HORARIOS.includes(horario)) return res.status(400).json({mensagem:'Horário inválido.'});
+  }
   const conn=await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -352,7 +352,7 @@ app.patch('/api/admin/agendamentos/:id',exigirAdmin,async(req,res)=>{
   if(!nome||!motivo||!data||!status||!atendimento)return res.status(400).json({mensagem:'Preencha os dados obrigatórios.'});
   if(!dataValida(data)||data<hoje()||!diaUtil(data))return res.status(400).json({mensagem:'Data inválida.'});
   if(status==='pedido_atendido'&&!tratativa)return res.status(400).json({mensagem:'Informe a tratativa para concluir o atendimento.'});
-  if(tipo==='grupo'){if(!participantes.length)return res.status(400).json({mensagem:'Adicione pelo menos o representante do grupo.'});if(!blocos.length)return res.status(400).json({mensagem:'Selecione pelo menos um bloco de horário.'});}else if(!HORARIOS.includes(horario))return res.status(400).json({mensagem:'Horário inválido.'});
+  if(tipo==='grupo'){if(!participantes.length)return res.status(400).json({mensagem:'Adicione pelo menos o representante do grupo.'});if(!blocos.length)return res.status(400).json({mensagem:'Selecione pelo menos um bloco de horário.'});}
   const conn=await pool.getConnection();
   try {
     await conn.beginTransaction();

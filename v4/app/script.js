@@ -24,20 +24,13 @@ function alternarCampos(ja){
         document.getElementById('nomeIdentificacao').required=false;
     }}
 
-function preencherHorarios(horarios){
-    const s=document.getElementById('horario');
-    s.innerHTML='<option value="">Selecione um horário</option>';
-    horarios.forEach(h=>{const o=document.createElement('option');
-    o.value=h;o.textContent=h;s.appendChild(o);});
-}
-
 function validarData(input){
     if(!input.value)return;
     const d=new Date(input.value+'T00:00:00');
     if([0,6].includes(d.getDay())){
         alert('Atendimento apenas em dias úteis (Segunda a Sexta-feira).');
         input.value='';
-        preencherHorarios([]);return;
+        return;
     }
     atualizarHorariosDisponiveis(input.value);
 }
@@ -46,10 +39,9 @@ async function atualizarHorariosDisponiveis(data){
     if(!data)return;
     try{const r=await fetch(`/api/agendamentos/disponiveis?data=${encodeURIComponent(data)}`);
     const d=await r.json();if(!r.ok)throw new Error(d.mensagem||'Não foi possível consultar os horários.');
-    preencherHorarios(d.horariosDisponiveis||[]);
-}
 
-catch(e){console.error(e);preencherHorarios([]);alert(e.message||'Não foi possível consultar os horários disponíveis.');}}
+}finally{};
+
 async function buscarCidadaos(termo){ return carregarMeuCadastro(); }
 async function carregarMeuCadastro(){
  const aviso=document.getElementById('avisoCadastro');
@@ -95,4 +87,4 @@ if(!horario){alert('Por favor, selecione um horário válido.');return;
 const[ano,mes,dia]=data.split('-');
 const dados={nome:limparTexto(nome),motivo:limparTexto(document.getElementById('motivo').value),data,horario,email:limparTexto(document.getElementById('email').value),cep:limparTexto(document.getElementById('cep').value),endereco:limparTexto(document.getElementById('endereco').value),jaTemCadastro:ja};
 
-try{const r=await fetch('/api/agendamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});const resposta=await r.json();if(!r.ok)throw new Error(resposta.mensagem||'Não foi possível realizar o agendamento.');document.getElementById('mensagem').innerHTML=`Agendamento confirmado com sucesso!<br>📅 Dia: ${dia}/${mes}/${ano} às 🕒 ${horario}`;form.reset();alternarCampos(false);preencherHorarios([]);}catch(e){console.error(e);alert(e.message||'Ocorreu um erro ao realizar o agendamento.');}});
+try{const r=await fetch('/api/agendamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});const resposta=await r.json();if(!r.ok)throw new Error(resposta.mensagem||'Não foi possível realizar o agendamento.');document.getElementById('mensagem').innerHTML=`Agendamento confirmado com sucesso!<br>📅 Dia: ${dia}/${mes}/${ano} às 🕒 ${horario}`;form.reset();alternarCampos(false);}catch(e){console.error(e);alert(e.message||'Ocorreu um erro ao realizar o agendamento.');}});

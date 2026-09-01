@@ -389,7 +389,7 @@ tr:hover td {
   </div><div id="campoHorario">
     
   <label>Horário</label>
-  <select id="editHorario"></select>
+  <input type="time" id="editHorario">
   </div>
   
   <div id="blocoGrupo" class="full hidden">
@@ -486,7 +486,6 @@ const b=$('aba'+nome);
 if(b)b.classList.add('ativo');
 }
 
-function preencherHorarios(sel){$('editHorario').innerHTML=HORARIOS.map(h=>`<option value="${h}" ${h===sel?'selected':''}>${h}</option>`).join('');}
 function montarSelectsGrupo(inicio='',fim='',ocupados=[]){
   const ocup=new Set(ocupados);
   const disponiveis=HORARIOS.filter(h=>!ocup.has(h));
@@ -560,7 +559,6 @@ async function abrirModalAtendimento(a=null){
   }else{
     // No atendimento único, os dados ficam no bloco principal do formulário.
   }
-  preencherHorarios(a?.horario?.slice(0,5)||HORARIOS[0]);
   aplicarModoGrupo(grupo);
   $('modalAtendimento').classList.add('aberto');
   if(grupo){
