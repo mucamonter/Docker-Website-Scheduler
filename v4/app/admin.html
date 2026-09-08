@@ -326,7 +326,7 @@ tr:hover td {
       
       <input id="busca" placeholder="Buscar nome, e-mail, telefone, CEP, endereço, motivo, participante...">
       <input id="filtroData" type="date">
-      <select id="filtroAtendimento"><option value="">Todos os atendimentos</option><option value="marcado">Online</option><option value="no_paco">No Paço</option></select>
+      <select id="filtroAtendimento"><option value="">Todos os atendimentos</option><option value="marcado">Telefone</option><option value="no_paco">No Paço</option></select>
       <select id="filtroStatus"><option value="">Todos os status</option><option value="pedido_pendente">Pendente</option><option value="pedido_atendido">Atendido</option><option value="pedido_nao_atendido">Não atendido</option><option value="cancelado">Cancelado</option></select>
     </div>
     <style>
@@ -379,7 +379,7 @@ tr:hover td {
 
   <select id="editAtendimento">
   <option value="no_paco">No Paço</option>
-  <option value="marcado">Online</option>
+  <option value="marcado">Telefone</option>
   </select>
   </div>
   
@@ -452,7 +452,7 @@ tr:hover td {
 <script>
 const HORARIOS=['09:00','09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
 const STATUS={cancelado:'Cancelado',pedido_nao_atendido:'Não atendido',pedido_atendido:'Atendido',pedido_pendente:'Pendente'};
-const ATEND={no_paco:'No Paço',marcado:'Online'};
+const ATEND={no_paco:'No Paço',marcado:'telefone'};
 let papel='',cache=[];
 let timer=null;
 const $=id=>document.getElementById(id);
