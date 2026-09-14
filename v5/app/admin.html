@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+<div class="container"> 
+    <div class="topbar">
+        <div><h2>Painel de Atendimento</h2><p id="perfil"></p></div>
+        <div class="top-actions">
+            <button id="novoAtendimento">Novo Atendimento</button>
+            <button id="sair">Sair</button></div>
+    </div>
+
+    <div class="tabs">
+        <button id="ativo">Atendimentos Cadastrados</button>
+        <button id="abaPendencias">Pendências</button>
+        <button id="abaUsuarios" class="admin-only">Usuários</button>
+        <button id="abaCidadaos" class="admin-only">Cidadãos Cadastrados</button>
+    </div>
+
+    <section id="painelAtendimentos" class="painel">
+        <div class="filtros">
+
+            <input type="date" id="filtroData">
+            <select name="" id="filtroAtendimento">
+                <option value="">Todos os atendimentos</option>
+                <option value="marcado">Telefone</option>
+                <option value="no_paco">No Paço</option>
+            </select>
+            <select name="" id="filtrosStatus">
+                <option value="">Todos os status</option>
+                <option value="pedido_pendente">Pendente</option>
+                <option value="pedido_atendido">Não Atendido</option>
+                <option value="pedido_nao_atendido">Não atendido</option>
+                <option value="cancelado">Cancelado</option>
+            </select>
+        </div>
+        <div id="mensagem"></div>
+        <div class="tabela-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Horário</th>
+                        <th>Atendimentos Salvos</th>
+                        <th>Cidadão / Grupo</th>
+                        <th>Telefone</th>
+                        <th>Endereço</th>
+                        <th>Motivo</th>
+                        <th>Tratativa</th>
+                        <th>Status</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="painelUsuarios" class="painel hidden admin-only">
+    <div class="topbar">
+        <div>
+            <h3>Usuários do painel</h3>
+            <p class="small">Somente administradores.</p>
+            </div>
+            <button id="novoUsuario">Criar usuário</button>
+        </div>
+    <div id="msgUsuarios">
+    </div>
+    <div class="tabela-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Perfil</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaUsuarios"></tbody>
+        </table>
+    </div>
+  </section>
+
+  <section id="painelCidadaos" class="painel hidden admin-only">
+    <h3>Cidadãos</h3>
+    <p class="small">Consulte contas de cidadãos, altere a senha e veja os agendamentos do cidadão seleconado</p>
+    <div class="filtros">
+        <input type="buscaCidadao" placeholder="Buscar por nome, e-mail ou telefone...">
+        <button id="buscarCidadao">Buscar</button>
+    </div>
+
+    <div id="msgCidadaos"></div>
+    <div class="tabela-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th>Criado em</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCidadaos"></tbody>
+        </table>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="modalAtendimento">
+    <div class="modal">
+        <div style="display:flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;">
+        
+        <h3 id="tituloAtendimento">Novo atendimento</h3>
+        <button type="button" id="toggleGrupo" class="sec">Atendimento em grupo</button>
+        </div>
+        <form action="formAtendimento">
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editTipo">
+            <div class="grid">
+                
+            </div>
+        </form>
+    </div>
+</div>
+    
+</body>
+</html>

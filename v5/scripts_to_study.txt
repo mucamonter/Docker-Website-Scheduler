@@ -1,0 +1,6 @@
+ h => ({
+        inicio: h, fim: (() => { 
+            const [hh,mm]=h.split(':').map(Number);
+            const d=new Date(2000,0,1,hh,mm+30);
+            return `${String(d.getHours()).padStart(2,'0')}`;})() }));
+
