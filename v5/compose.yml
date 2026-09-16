@@ -20,6 +20,8 @@ services:
     build: .
     ports: ["3000:3000"]
     restart: unless-stopped
+    working_dir: /app/
+    
     volumes:
         - .:/app
         - /app/node_modules
@@ -33,7 +35,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       SESSION_SECRET: ${SESSION_SECRET}
       PORT: 3000
-      command: npm run dev
+      
       NODE_ENV: development
     depends_on:
       db:
