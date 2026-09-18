@@ -1,8 +1,14 @@
-const express = require('express');
-const session = require('express-session');
-const path = require('path');
-const pool = require('./db');
-const bcrypt = require('bcryptjs');
+import express from 'express';
+import session from 'express-session';
+import path from 'path';
+import bcrypt from 'bcryptjs';
+import { fileURLToPath } from 'url';
+import { pool } from './db.mjs';
+const { adapter } = pool;
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
