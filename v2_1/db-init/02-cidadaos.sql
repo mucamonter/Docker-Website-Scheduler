@@ -1,2 +1,0 @@
--- A estrutura de cidadaos e a relação com agendamentos já são criadas em 01-schema.sql.
--- Este arquivo é mantido apenas para compatibilidade com a estrutura do projeto.
