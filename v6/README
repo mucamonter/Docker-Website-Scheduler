@@ -1,0 +1,50 @@
+23/09/26
+Refiz o projeto de acordo com o Pnpm.
+    Pra isso demorei para conseguir entender o que tinha que fazer para resolver o erro:
+    
+    Telemetry rejected (401). Check that appKey and appSecret are valid; the application is taken from the key. Credentials are read once at start-up, so this will not recover without a restart - further rejections are counted, not logged.
+
+    Consegui resolver desativando no src/main.ts (deixando tudo com comentário) 
+
+Restruturei o código
+    Adicionei o corepack para funcionar bem com o pnpm
+
+
+Pendencias:
+Sempre estar entendendo o projeto
+Adicionar mais segurança usando bibliotecas
+Adicionar liçensa
+Deixar mais prático para manutenção
+
+
+
+Erros 23/09/2026:
+
+------------------------------------------------------------------------------------------------------------
+ npm notice
+app-1  | npm notice New major version of npm available! 10.8.2 -> 12.1.0
+app-1  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
+app-1  | npm notice To update run: npm install -g npm@12.1.0
+app-1  | npm notice
+------------------------------------------------------------------------------------------------------------|
+
+------------------------------------------------------------------------------------------------------------
+Telemetry rejected (401). Check that appKey and appSecret are valid; the application is taken from the key. Credentials are read once at start-up, so this will not recover without a restart - further rejections are counted, not logged.
+------------------------------------------------------------------------------------------------------------|
+
+------------------------------------------------------------------------------------------------------------
+failed to solve: process "/bin/sh -c pnpm ci" did not complete successfully: exit code: 1
+------------------------------------------------------------------------------------------------------------|
+
+------------------------------------------------------------------------------------------------------------
+× installing dependencies
+8.204   ╰─▶ Headless installation requires a pnpm-lock.yaml file, but none was
+8.204       found. Run `pnpm install` without --frozen-lockfile to create one.
+8.204
+failed to solve: process "/bin/sh -c pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
+------------------------------------------------------------------------------------------------------------|
+
+(had more issues that I solved, need to look at germini)
+
+
+
