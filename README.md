@@ -26,6 +26,6 @@ Start Schedule :)
 
 
 
-## Lizenz
+## License
 
-Dieses Projekt hat eine MIT-Lizenz. Sehen Sie sich die Datei [LICENSE](LICENSE) an, um weitere Einzelheiten zu erfahren.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
