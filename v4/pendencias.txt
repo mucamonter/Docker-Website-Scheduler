@@ -1,0 +1,13 @@
+
+
+
+Usuários:
+    ADMINISTRADOR -> A pagina de atendimento em grupo:
+    tem inputs que não são necessários no ínicio
+    O botão de salvar não salva. Erro: Um controle de formulário inválido não pode receber foco.
+
+    BALCONISTA(antigo visualisador) -> agora precisa criar atendimentos novos, não precisa da parte de pendencias, usuários, cidadãos cadastrados. Apenas a tab atendimentos e criar atendimentos em grupo e atendimento único { intuito é deixar o mais prático e fácil de manusear (simples) }
+    
+    
+    Cidadão -> okay
+
