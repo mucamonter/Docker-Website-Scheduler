@@ -1,7 +1,10 @@
+// @ts-check
 import express from 'express';
+import type { RequestHandler } from 'express';
 import session from 'express-session';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import { DataISO } from './types/data';
 
 
 import { defineConfig } from "prisma/config";
@@ -9,13 +12,12 @@ import { defineConfig } from "prisma/config";
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    // Usar process.env impede erros do mecanismo do Prisma se a variável estiver ausente no build
-    url: "mysql://root:Ardmim.186!@127.0.0.1:3306/V2_DB?connection_timeout=30",
+    url: "mysql://root:Ardmim321@.1270.0.1:3306/V2_DB?connection_timeout=30",
   },
 }); 
 
 
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 import { fileURLToPath } from 'url';
@@ -26,8 +28,11 @@ const __dirname = path.dirname(__filename);
 
 
 const adapter = new PrismaMariaDb({
-  host: "localhost",
+  host: "db",
   port: 3306,
+  user: 'root',
+  password: 'Ardmin321',
+  database: 'V2_DB',
   connectionLimit: 5,
 });
 const prisma = new PrismaClient({ adapter });
@@ -39,7 +44,7 @@ const HORARIOS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00',
 const STATUS = ['cancelado', 'pedido_nao_atendido', 'pedido_atendido', 'pedido_pendente'];
 const ATENDIMENTO = ['no_paco', 'marcado'];
 const TIPOS_ATENDIMENTO = ['unico', 'grupo'];
-const HORARIOS_BLOCO = HORARIOS.map(h => ({ inicio: h, fim: (() => { const [hh, mm] = h.split(':').map(Number); const d = new Date(2000, 0, 1, hh, mm + 30); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; })() }));
+
 const ADMIN_USER = process.env.ADMIN_USER;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -55,24 +60,55 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 8 * 60 * 60 * 1000 }
 }));
 
-const texto = v => typeof v === 'string' ? v.trim() : '';
-function dataValida(v) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
-  const [a, m, d] = v.split('-').map(Number);
+
+
+const texto = (v:string) => typeof v === 'string' ? v.trim() : '';
+
+
+function dataValida(v: string):v is DataISO {
+  const match = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+
+  const a = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+
+
   const x = new Date(Date.UTC(a, m - 1, d));
   return x.getUTCFullYear() === a && x.getUTCMonth() === m - 1 && x.getUTCDate() === d;
 }
-function diaUtil(v) {
-  const [a, m, d] = v.split('-').map(Number);
+
+/**
+ * @param {String} v
+ */
+
+function diaUtil(v:string) {
+  
+  const match = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+
+  const a = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+
   return ![0, 6].includes(new Date(Date.UTC(a, m - 1, d)).getUTCDay());
 }
 function hoje() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
-function exigirAdmin(req, res, next) {
-  if (req.session?.papel === 'admin' || req.session?.papel === 'visualizador') return next();
-  return res.status(401).json({ mensagem: 'Acesso administrativo necessário.' });
-}
+export const exigirAdmin: RequestHandler = (req, res, next) => {
+  const papeisPermitidos = ['admin', 'visualizador'];
+
+  if (!req.session?.papel) {
+    return res.status(401).json({ mensagem: 'Autenticação necessária.' });
+  }
+
+  if (!papeisPermitidos.includes(req.session.papel)) {
+    return res.status(403).json({ mensagem: 'Acesso negado.' });
+  }
+
+  return next();
+};
 function exigirStaff(req, res, next) {
   if (req.session?.papel === 'admin' || req.session?.papel === 'visualizador') return next();
   return res.status(401).json({ mensagem: 'Acesso ao painel necessário.' });
@@ -94,7 +130,7 @@ function blocosValidos(lista) {
 }
 
 async function colunaExiste(tabela, coluna) {
-  const [rows] = await prisma.$queryRaw`
+  const rows = await prisma.$queryRaw`
     SELECT COUNT(*) AS total
       FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE()
@@ -102,8 +138,7 @@ async function colunaExiste(tabela, coluna) {
        AND COLUMN_NAME = ${coluna}
   `;
 
-  // Como 'rows' já é o primeiro objeto, acessamos '.total' diretamente
-  // O BigInt (se retornado) é convertido com segurança usando Number ou o operador +
+  
   return Number(rows?.total || 0) > 0;
 }
 
@@ -111,26 +146,26 @@ async function colunaExiste(tabela, coluna) {
 async function prepararBanco() {
   // Banco já existente: as alterações são feitas de forma idempotente.
   if (!(await colunaExiste('cidadaos', 'telefone'))) {
-    await prisma.query('ALTER TABLE cidadaos ADD COLUMN telefone VARCHAR(30) NULL AFTER email');
+    await prisma.$executeRaw`ALTER TABLE cidadaos ADD COLUMN telefone VARCHAR(30) NULL AFTER email`;
   }
 
   if (!(await colunaExiste('agendamentos', 'telefone'))) {
-    await prisma.query('ALTER TABLE agendamentos ADD COLUMN telefone VARCHAR(30) NULL AFTER email');
+    await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN telefone VARCHAR(30) NULL AFTER email`;
   }
   if (!(await colunaExiste('agendamentos', 'atendimento'))) {
-    await prisma.query("ALTER TABLE agendamentos ADD COLUMN atendimento ENUM('no_paco','marcado') NOT NULL DEFAULT 'marcado' AFTER horario");
+    await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN atendimento ENUM('no_paco','marcado') NOT NULL DEFAULT 'marcado' AFTER horario`;
   }
   if (!(await colunaExiste('agendamentos', 'tratativa'))) {
-    await prisma.query('ALTER TABLE agendamentos ADD COLUMN tratativa TEXT NULL AFTER motivo');
+    await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN tratativa TEXT NULL AFTER motivo`;
   }
   if (!(await colunaExiste('agendamentos', 'tipo_atendimento'))) {
-    await prisma.query("ALTER TABLE agendamentos ADD COLUMN tipo_atendimento ENUM('unico','grupo') NOT NULL DEFAULT 'unico' AFTER atendimento");
+    await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN tipo_atendimento ENUM('unico','grupo') NOT NULL DEFAULT 'unico' AFTER atendimento`;
   }
   if (!(await colunaExiste('agendamentos', 'blocos_json'))) {
-    await prisma.query('ALTER TABLE agendamentos ADD COLUMN blocos_json JSON NULL AFTER tipo_atendimento');
+    await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN blocos_json JSON NULL AFTER tipo_atendimento`;
   }
 
-  await prisma.query(`CREATE TABLE IF NOT EXISTS agendamento_participantes (
+  await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS agendamento_participantes (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     agendamento_id INT UNSIGNED NOT NULL,
     nome VARCHAR(150) NOT NULL,
@@ -139,9 +174,9 @@ async function prepararBanco() {
     PRIMARY KEY (id),
     INDEX idx_participante_agendamento (agendamento_id),
     CONSTRAINT fk_participante_agendamento FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB`);
+  ) ENGINE=InnoDB`
 
-  await prisma.query(`CREATE TABLE IF NOT EXISTS agendamento_slots (
+  await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS agendamento_slots (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     agendamento_id INT UNSIGNED NOT NULL,
     data DATE NOT NULL,
@@ -150,58 +185,58 @@ async function prepararBanco() {
     INDEX idx_slot_agendamento (agendamento_id),
     INDEX idx_agenda_slot_data_hora (data, horario_inicio),
     CONSTRAINT fk_slot_agendamento FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB`);
+  ) ENGINE=InnoDB`
 
   try {
-    const [idxs] = await prisma.query("SHOW INDEX FROM agendamento_slots WHERE Key_name IN ('uk_agenda_slot','agenda_slot')");
+    const idxs = await prisma.$queryRaw`SHOW INDEX FROM agendamento_slots WHERE Key_name IN ('uk_agenda_slot','agenda_slot')`;
     const nomes = [...new Set((idxs || []).map(i => i.Key_name).filter(Boolean))];
     for (const nome of nomes) {
-      await prisma.query(`ALTER TABLE agendamento_slots DROP INDEX \`${nome}\``);
+      await prisma.$executeRaw`ALTER TABLE agendamento_slots DROP INDEX \`${nome}\``;
     }
   } catch (e) {
     if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
   }
 
   try {
-    const [idx] = await prisma.query("SHOW INDEX FROM agendamentos WHERE Key_name = 'uk_agendamento_slot_ativo'");
+    const idx = await prisma.$queryRaw`SHOW INDEX FROM agendamentos WHERE Key_name = 'uk_agendamento_slot_ativo`;
     if (Array.isArray(idx) && idx.length) {
-      await prisma.query('ALTER TABLE agendamentos DROP INDEX uk_agendamento_slot_ativo');
+      await prisma.$executeRaw`ALTER TABLE agendamentos DROP INDEX uk_agendamento_slot_ativo`;
     }
   } catch (e) {
     if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
   }
 
   try {
-    const [col] = await prisma.query("SHOW COLUMNS FROM agendamentos LIKE 'slot_ativo'");
+    const col = await prisma.$queryRaw`SHOW COLUMNS FROM agendamentos LIKE 'slot_ativo`;
     if (Array.isArray(col) && col.length) {
-      await prisma.query('ALTER TABLE agendamentos DROP COLUMN slot_ativo');
+      await prisma.$executeRaw`ALTER TABLE agendamentos DROP COLUMN slot_ativo`;
     }
   } catch (e) {
     if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
   }
 
   // Preenche os slots dos atendimentos existentes. Registros cancelados não ocupam horário.
-  await prisma.query("INSERT IGNORE INTO agendamento_slots (agendamento_id,data,horario_inicio) SELECT id,data,horario FROM agendamentos WHERE status <> 'cancelado'");
+  await prisma.$executeRaw`INSERT IGNORE INTO agendamento_slots (agendamento_id,data,horario_inicio) SELECT id,data,horario FROM agendamentos WHERE status <> 'cancelado'`;
 
   // Migra status antigos antes de restringir o ENUM.
-  const [statusCol] = await prisma.query('SHOW COLUMNS FROM agendamentos LIKE \'status\'');
+  const [statusCol] = await prisma.$queryRaw`SHOW COLUMNS FROM agendamentos LIKE \'status\'`;
   if (!statusCol.length) {
-    await prisma.query("ALTER TABLE agendamentos ADD COLUMN status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'");
+    await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'`;
   } else {
     // Primeiro ampliamos o ENUM para aceitar valores antigos e novos;
     // só depois fazemos a conversão e finalmente restringimos o ENUM.
-    await prisma.query("ALTER TABLE agendamentos MODIFY COLUMN status ENUM('cancelado','no_paco','no paço','atendido','pendente','agendado','feito','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'");
-    await prisma.query("UPDATE agendamentos SET atendimento='no_paco' WHERE status='no_paco' OR status='no paço'");
-    await prisma.query("UPDATE agendamentos SET status='pedido_pendente' WHERE status='agendado' OR status='pendente' OR status='no_paco'");
-    await prisma.query("UPDATE agendamentos SET status='pedido_atendido' WHERE status='feito' OR status='atendido'");
-    await prisma.query("UPDATE agendamentos SET status='pedido_nao_atendido' WHERE status='pedido_nao_atendido'");
-    await prisma.query("ALTER TABLE agendamentos MODIFY COLUMN status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'");
+    await prisma.$executeRaw`ALTER TABLE agendamentos MODIFY COLUMN status ENUM('cancelado','no_paco','no paço','atendido','pendente','agendado','feito','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'`;
+    await prisma.$executeRaw`UPDATE agendamentos SET atendimento='no_paco' WHERE status='no_paco' OR status='no paço'`;
+    await prisma.$executeRaw`UPDATE agendamentos SET status='pedido_pendente' WHERE status='agendado' OR status='pendente' OR status='no_paco'`;
+    await prisma.$executeRaw`UPDATE agendamentos SET status='pedido_atendido' WHERE status='feito' OR status='atendido'`;
+    await prisma.$executeRaw`UPDATE agendamentos SET status='pedido_nao_atendido' WHERE status='pedido_nao_atendido'`;
+    await prisma.$executeRaw`ALTER TABLE agendamentos MODIFY COLUMN status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'`;
   }
 
   // A aplicação agora permite múltiplos atendimentos no mesmo horário. 
   // Por esse motivo, não há mais uma coluna/índice global de unicidade por slot.
 
-  await prisma.query(`CREATE TABLE IF NOT EXISTS usuarios_admin (
+  await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS usuarios_admin (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nome VARCHAR(150) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -210,14 +245,14 @@ async function prepararBanco() {
     criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_usuario_admin_email (email)
-  ) ENGINE=InnoDB`);
+  ) ENGINE=InnoDB`;
 }
 
 
 
 app.get('/api/health', async (req, res) => {
   try {
-    await prisma.query('SELECT 1');
+    await prisma.$queryRaw`SELECT 1`;
     res.json({ ok: true, database: process.env.DB_NAME || 'V2_DB' });
   }
   catch (e) {
@@ -237,7 +272,7 @@ app.post('/api/login', async (req, res) => {
         res.json({ sucesso: true, tipo: 'admin', redirect: '/admin.html' });
       });
     }
-    const [staff] = await prisma.$queryRaw`SELECT id,nome,email,senha_hash,papel FROM usuarios_admin WHERE LOWER(email)= ${login} LIMIT 1`;
+    const staff = await prisma.$executeRaw`SELECT id,nome,email,senha_hash,papel FROM usuarios_admin WHERE LOWER(email)= ${login} LIMIT 1`;
     if (staff.length && await bcrypt.compare(senha, staff[0].senha_hash)) {
       return req.session.regenerate(err => {
         if (err) return res.status(500).json({ mensagem: 'Não foi possível iniciar a sessão.' });
@@ -245,7 +280,7 @@ app.post('/api/login', async (req, res) => {
         res.json({ sucesso: true, tipo: staff[0].papel, redirect: '/admin.html' });
       });
     }
-    const [rows] = await prisma.$queryRaw`SELECT id,nome,email,senha_hash FROM cidadaos WHERE LOWER(email)= ${login} LIMIT 1`;
+    const rows = await prisma.$executeRaw`SELECT id,nome,email,senha_hash FROM cidadaos WHERE LOWER(email)= ${login} LIMIT 1`;
     if (!rows.length || !(await bcrypt.compare(senha, rows[0].senha_hash))) return res.status(401).json({ mensagem: 'Usuário ou senha inválidos.' });
     const c = rows[0];
     req.session.regenerate(err => {
@@ -265,24 +300,24 @@ app.post('/api/cidadao/cadastro', async (req, res) => {
   if (senha.length < 6) return res.status(400).json({ mensagem: 'A senha deve ter pelo menos 6 caracteres.' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ mensagem: 'Informe um e-mail válido.' });
   try {
-    const [existente] = await prisma.$queryRaw`SELECT id FROM cidadaos WHERE email= ${email}`;
+    const existente = await prisma.$executeRaw`SELECT id FROM cidadaos WHERE email= ${email}`;
     if (existente.length) return res.status(409).json({ mensagem: 'Já existe uma conta com este e-mail.' });
     const hash = await bcrypt.hash(senha, 12);
-    const [r] = await prisma.$queryRaw`INSERT INTO cidadaos (nome,email,telefone,senha_hash,cep,endereco) VALUES (${nome},${email},${telefone},${hash},${cep},${endereco})`;
+    const r = await prisma.$queryRaw`INSERT INTO cidadaos (nome,email,telefone,senha_hash,cep,endereco) VALUES (${nome},${email},${telefone},${hash},${cep},${endereco})`;
     res.status(201).json({ sucesso: true, id: r.insertId });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível criar a conta.' }); }
 });
 
 app.get('/api/cidadao/me', exigirCidadao, async (req, res) => {
-  try { const [rows] = await prisma.$queryRaw`SELECT id,nome,email,telefone FROM cidadaos WHERE id=${req.session.cidadaoId}`;
-   if (!rows.length) return res.status(401).json({ mensagem: 'Conta não encontrada.' }); res.json({ cidadao: rows[0] }); }
+  try { const rows = await prisma.$executeRaw`SELECT id,nome,email,telefone FROM cidadaos WHERE id=${req.session.cidadaoId}`;
+   if (!rows.length) return res.status(401).json({ mensagem: 'Conta não encontrada.' }); res.json({ cidadao: rows }); }
   catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar a conta.' }); }
 });
 
 app.get('/api/cidadao/meus-agendamentos', exigirCidadao, async (req, res) => {
   try {
-    const [rows] = await prisma.$queryRaw`SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%d/%m/%Y') data_br,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.status,a.atendimento FROM agendamentos a WHERE a.cidadao_id=${req.session.cidadaoId} ORDER BY a.data DESC,a.horario DESC,a.id DESC`;
-    const [cid] = await prisma.$queryRaw`SELECT id,nome,email,telefone FROM cidadaos WHERE id=${req.session.cidadaoId}`;
+    const rows = await prisma.$executeRaw`SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%d/%m/%Y') data_br,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.status,a.atendimento FROM agendamentos a WHERE a.cidadao_id=${req.session.cidadaoId} ORDER BY a.data DESC,a.horario DESC,a.id DESC`;
+    const cid = await prisma.$executeRaw`SELECT id,nome,email,telefone FROM cidadaos WHERE id=${req.session.cidadaoId}`;
     res.json({ cidadao: cid[0], agendamentos: rows });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar seus agendamentos.' }); }
 });
@@ -339,7 +374,9 @@ app.get('/api/admin/agendamentos', exigirStaff, async (req, res) => {
     const isViewer = req.session.papel === 'visualizador'; const { where, params } = aplicarBuscaAgendamentos(req, isViewer);
     const limit = 500;
     const sql = `SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%Y-%m-%d') data,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.cep,a.endereco,DATE_FORMAT(a.data_registro,'%Y-%m-%d %H:%i:%s') data_registro,a.status,a.atendimento,a.tipo_atendimento,a.cidadao_id,(SELECT COUNT(*) FROM agendamento_participantes gp2 WHERE gp2.agendamento_id=a.id) participantes_total FROM agendamentos a ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY a.data ASC,a.horario ASC,a.id ASC LIMIT ${limit}`;
-    const [rows] = await prisma.$queryRawUnsafe(sql, params); res.json({ agendamentos: rows, papel: req.session.papel });
+    const rows = await prisma.$executeRaw(Prisma.raw(sql), ...params);
+    
+    res.json({ agendamentos: rows, papel: req.session.papel });
   } catch (e) { res.status(400).json({ mensagem: e.message || 'Não foi possível carregar os agendamentos.' }); }
 });
 
@@ -347,15 +384,15 @@ app.get('/api/admin/agendamentos/:id/detalhes', exigirAdmin, async (req, res) =>
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
   try {
-    const [p] = await prisma.$queryRaw`SELECT nome,telefone,principal FROM agendamento_participantes WHERE agendamento_id=${id} ORDER BY principal DESC,id ASC`;
-    const [s] = await prisma.$queryRaw`SELECT TIME_FORMAT(horario_inicio,'%H:%i') horario FROM agendamento_slots WHERE agendamento_id=${id} ORDER BY horario_inicio ASC`;
+    const p = await prisma.$executeRaw`SELECT nome,telefone,principal FROM agendamento_participantes WHERE agendamento_id=${id} ORDER BY principal DESC,id ASC`;
+    const s = await prisma.$executeRaw`SELECT TIME_FORMAT(horario_inicio,'%H:%i') horario FROM agendamento_slots WHERE agendamento_id=${id} ORDER BY horario_inicio ASC`;
     res.json({ participantes: p, blocos: s.map(x => x.horario) });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os detalhes.' }); }
 });
 
 app.get('/api/admin/pendencias', exigirAdmin, async (req, res) => {
   try {
-    const [rows] = await prisma.$queryRaw`SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%Y-%m-%d') data,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.status,a.atendimento FROM agendamentos a WHERE a.status='pedido_pendente' AND (a.tratativa IS NULL OR TRIM(a.tratativa)='') ORDER BY a.data ASC,a.horario ASC,a.id ASC`;
+    const rows = await prisma.$executeRaw`SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%Y-%m-%d') data,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.status,a.atendimento FROM agendamentos a WHERE a.status='pedido_pendente' AND (a.tratativa IS NULL OR TRIM(a.tratativa)='') ORDER BY a.data ASC,a.horario ASC,a.id ASC`;
     res.json({ agendamentos: rows });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar as pendências.' }); }
 });
@@ -408,7 +445,7 @@ app.delete('/api/admin/agendamentos/:id', exigirStaff, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
   try {
-    const [r] = await prisma.$queryRaw`DELETE FROM agendamentos WHERE id=${id}`;
+    const r = await prisma.$executeRaw`DELETE FROM agendamentos WHERE id=${id}`;
     if (!r.affectedRows) return res.status(404).json({ mensagem: 'Atendimento não encontrado.' });
     res.json({ sucesso: true });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível excluir o atendimento.' }); }
@@ -430,7 +467,7 @@ app.patch('/api/admin/agendamentos/:id/status', exigirAdmin, async (req, res) =>
 
 app.get('/api/admin/usuarios', exigirAdmin, async (req, res) => {
   try {
-    const [rows] = await prisma.$queryRaw`SELECT id,nome,email,papel,DATE_FORMAT(criado_em,'%d/%m/%Y %H:%i') criado_em FROM usuarios_admin ORDER BY nome ASC`;
+    const rows = await prisma.$executeRaw`SELECT id,nome,email,papel,DATE_FORMAT(criado_em,'%d/%m/%Y %H:%i') criado_em FROM usuarios_admin ORDER BY nome ASC`;
 
     res.json({ usuarios: rows });
   } catch (e) {
@@ -454,8 +491,8 @@ app.patch('/api/admin/usuarios/:id', exigirAdmin, async (req, res) => {
 });
 app.delete('/api/admin/usuarios/:id', exigirAdmin, async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); if (id === req.session.usuarioId) return res.status(400).json({ mensagem: 'Você não pode excluir o próprio usuário nesta tela.' }); try { const [r] = await prisma.$queryRaw`DELETE FROM usuarios_admin WHERE id=${id}`; if (!r.affectedRows) return res.status(404).json({ mensagem: 'Usuário não encontrado.' }); res.json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível excluir o usuário.' }); } });
 
-app.get('/api/admin/cidadaos', exigirAdmin, async (req, res) => { const busca = texto(req.query.busca); try { const where = []; const params = []; if (busca) { const t = `%${busca}%`; where.push('(c.nome LIKE ? OR c.email LIKE ? OR c.telefone LIKE ?)'); params.push(t, t, t); } const [rows] = await prisma.$queryRawUnsafe(`SELECT c.id,c.nome,c.email,c.telefone,DATE_FORMAT(c.criado_em,'%d/%m/%Y %H:%i') criado_em FROM cidadaos c ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY c.nome ASC LIMIT 500`, ...params); res.json({ cidadaos: rows }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os cidadãos.' }); } });
-app.get('/api/admin/cidadaos/:id', exigirAdmin, async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); try { const [c] = await prisma.$queryRaw`SELECT id,nome,email,telefone,DATE_FORMAT(criado_em,\'%d/%m/%Y %H:%i\') criado_em FROM cidadaos WHERE id=${id}`; if (!c.length) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); const [a] = await prisma.$queryRaw`SELECT id,motivo,DATE_FORMAT(data,'%d/%m/%Y') data_br,TIME_FORMAT(horario,'%H:%i') horario,status,atendimento,tratativa FROM agendamentos WHERE cidadao_id=${id} ORDER BY data DESC,horario DESC,id DESC`; res.json({ cidadao: c[0], agendamentos: a }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar o cidadão.' }); } });
+app.get('/api/admin/cidadaos', exigirAdmin, async (req, res) => { const busca = texto(req.query.busca); try { const where = []; const params = []; if (busca) { const t = `%${busca}%`; where.push('(c.nome LIKE ? OR c.email LIKE ? OR c.telefone LIKE ?)'); params.push(t, t, t); } const rows = await prisma.$queryRawUnsafe(`SELECT c.id,c.nome,c.email,c.telefone,DATE_FORMAT(c.criado_em,'%d/%m/%Y %H:%i') criado_em FROM cidadaos c ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY c.nome ASC LIMIT 500`, ...params); res.json({ cidadaos: rows }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os cidadãos.' }); } });
+app.get('/api/admin/cidadaos/:id', exigirAdmin, async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); try { const c = await prisma.$queryRaw`SELECT id,nome,email,telefone,DATE_FORMAT(criado_em,\'%d/%m/%Y %H:%i\') criado_em FROM cidadaos WHERE id=${id}`; if (!c.length) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); const a = await prisma.$queryRaw`SELECT id,motivo,DATE_FORMAT(data,'%d/%m/%Y') data_br,TIME_FORMAT(horario,'%H:%i') horario,status,atendimento,tratativa FROM agendamentos WHERE cidadao_id=${id} ORDER BY data DESC,horario DESC,id DESC`; res.json({ cidadao: c[0], agendamentos: a }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar o cidadão.' }); } });
 app.patch('/api/admin/cidadaos/:id/senha', exigirAdmin, async (req, res) => { const id = Number(req.params.id), senha = typeof req.body.senha === 'string' ? req.body.senha : ''; if (!Number.isInteger(id) || senha.length < 6) return res.status(400).json({ mensagem: 'Informe uma senha com pelo menos 6 caracteres.' }); try { const hash = await bcrypt.hash(senha, 12); const [r] = await prisma.$queryRaw`UPDATE cidadaos SET senha_hash=${hash} WHERE id=${id}`; if (!r.affectedRows) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); res.json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível alterar a senha.' }); } });
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'app', 'login.html')));
