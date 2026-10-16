@@ -9,11 +9,10 @@ RUN npm ci --no-audit --no-fund
 
 RUN npm install dotenv
 
-COPY prisma ./prisma/
 
 COPY app ./app
 
-COPY server ./server
+COPY src ./src
 
 COPY prisma7.config.ts ./
 

@@ -1,10 +1,11 @@
 // @ts-check
-import express from 'express';
+
+import express,  { type Request, type Response, type NextFunction } from 'express';
 import type { RequestHandler } from 'express';
 import session from 'express-session';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import { DataISO } from './types/data';
+import type { DataISO } from './types/data';
 
 
 import { defineConfig } from "prisma/config";
@@ -21,6 +22,8 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 import { fileURLToPath } from 'url';
+import type { Schema } from 'inspector/promises';
+import { array } from 'node:stream/iter';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,7 +99,7 @@ function diaUtil(v:string) {
 function hoje() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
-export const exigirAdmin: RequestHandler = (req, res, next) => {
+export const exigirAdmin: RequestHandler = (req: Request, res: Response, next:NextFunction) => {
   const papeisPermitidos = ['admin', 'visualizador'];
 
   if (!req.session?.papel) {
@@ -109,28 +112,28 @@ export const exigirAdmin: RequestHandler = (req, res, next) => {
 
   return next();
 };
-function exigirStaff(req, res, next) {
+function exigirStaff(req: Request, res: Response, next:NextFunction) {
   if (req.session?.papel === 'admin' || req.session?.papel === 'visualizador') return next();
   return res.status(401).json({ mensagem: 'Acesso ao painel necessário.' });
 }
-function exigirCidadao(req, res, next) {
+function exigirCidadao(req: Request, res: Response, next:NextFunction) {
   if (req.session?.papel === 'cidadao' && req.session?.cidadaoId) return next();
   return res.status(401).json({ mensagem: 'Login de cidadão necessário.' });
 }
-function valorStatus(s) { return STATUS.includes(s) ? s : null; }
-function valorAtendimento(s) { return ATENDIMENTO.includes(s) ? s : null; }
-function valorTipo(s) { return TIPOS_ATENDIMENTO.includes(s) ? s : null; }
-function normalizarParticipantes(lista) {
+function valorStatus(s:DataISO) { return STATUS.includes(s) ? s : null; }
+function valorAtendimento(s:DataISO) { return ATENDIMENTO.includes(s) ? s : null; }
+function valorTipo(s:DataISO) { return TIPOS_ATENDIMENTO.includes(s) ? s : null; }
+function normalizarParticipantes(lista:any) {
   if (!Array.isArray(lista)) return [];
   return lista.map(p => ({ nome: texto(p?.nome), telefone: texto(p?.telefone) })).filter(p => p.nome).slice(0, 100);
 }
-function blocosValidos(lista) {
+function blocosValidos(lista:any) {
   if (!Array.isArray(lista)) return [];
   return [...new Set(lista.map(texto))].filter(h => HORARIOS.includes(h));
 }
 
-async function colunaExiste(tabela, coluna) {
-  const rows = await prisma.$queryRaw`
+async function colunaExiste(tabela:string, coluna:string) {
+  const rows = await prisma.$queryRaw<{ total: bigint }[]>`
     SELECT COUNT(*) AS total
       FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE()
@@ -139,7 +142,7 @@ async function colunaExiste(tabela, coluna) {
   `;
 
   
-  return Number(rows?.total || 0) > 0;
+  return Number(rows[0]?.total || 0) > 0;
 }
 
 
@@ -189,12 +192,12 @@ async function prepararBanco() {
 
   try {
     const idxs = await prisma.$queryRaw`SHOW INDEX FROM agendamento_slots WHERE Key_name IN ('uk_agenda_slot','agenda_slot')`;
-    const nomes = [...new Set((idxs || []).map(i => i.Key_name).filter(Boolean))];
+    const nomes = [...new Set((Array.isArray(idxs) ? idxs : []).map((i: { Key_name?: string }) => i.Key_name).filter((nome): nome is string => Boolean(nome)))];
     for (const nome of nomes) {
       await prisma.$executeRaw`ALTER TABLE agendamento_slots DROP INDEX \`${nome}\``;
     }
   } catch (e) {
-    if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
+    if (!(e instanceof Error) || !/doesn't exist|not exist/i.test(e.message)) throw e;
   }
 
   try {
@@ -203,7 +206,7 @@ async function prepararBanco() {
       await prisma.$executeRaw`ALTER TABLE agendamentos DROP INDEX uk_agendamento_slot_ativo`;
     }
   } catch (e) {
-    if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
+    if (!(e instanceof Error) || !/doesn't exist|not exist/i.test(e.message)) throw e;
   }
 
   try {
@@ -212,14 +215,15 @@ async function prepararBanco() {
       await prisma.$executeRaw`ALTER TABLE agendamentos DROP COLUMN slot_ativo`;
     }
   } catch (e) {
-    if (!/doesn't exist|not exist/i.test(e.message || '')) throw e;
+    if (!(e instanceof Error) || !/doesn't exist|not exist/i.test(e.message)) throw e;
   }
 
   // Preenche os slots dos atendimentos existentes. Registros cancelados não ocupam horário.
   await prisma.$executeRaw`INSERT IGNORE INTO agendamento_slots (agendamento_id,data,horario_inicio) SELECT id,data,horario FROM agendamentos WHERE status <> 'cancelado'`;
 
   // Migra status antigos antes de restringir o ENUM.
-  const [statusCol] = await prisma.$queryRaw`SHOW COLUMNS FROM agendamentos LIKE \'status\'`;
+  const statusResult = await prisma.$queryRaw`SHOW COLUMNS FROM agendamentos LIKE \'status\'`;
+  const statusCol = Array.isArray(statusResult) ? statusResult : [];
   if (!statusCol.length) {
     await prisma.$executeRaw`ALTER TABLE agendamentos ADD COLUMN status ENUM('cancelado','pedido_nao_atendido','pedido_atendido','pedido_pendente') NOT NULL DEFAULT 'pedido_pendente'`;
   } else {
@@ -250,7 +254,7 @@ async function prepararBanco() {
 
 
 
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', async (req: Request, res: Response) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ ok: true, database: process.env.DB_NAME || 'V2_DB' });
@@ -260,7 +264,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', async (req: Request, res: Response) => {
   const login = texto(req.body.login).toLowerCase();
   const senha = typeof req.body.senha === 'string' ? req.body.senha : '';
   if (!login || !senha) return res.status(400).json({ mensagem: 'Informe o login e a senha.' });
@@ -272,12 +276,14 @@ app.post('/api/login', async (req, res) => {
         res.json({ sucesso: true, tipo: 'admin', redirect: '/admin.html' });
       });
     }
-    const staff = await prisma.$executeRaw`SELECT id,nome,email,senha_hash,papel FROM usuarios_admin WHERE LOWER(email)= ${login} LIMIT 1`;
-    if (staff.length && await bcrypt.compare(senha, staff[0].senha_hash)) {
+    const staff = await prisma.$queryRaw<Array<{ id: number; nome: string; email: string; senha_hash: string; papel: string }>>`SELECT id,nome,email,senha_hash,papel FROM usuarios_admin WHERE LOWER(email)= ${login} LIMIT 1`;
+
+    const staffUser = staff[0];
+    if (staffUser && await bcrypt.compare(senha, staffUser.senha_hash)) {
       return req.session.regenerate(err => {
         if (err) return res.status(500).json({ mensagem: 'Não foi possível iniciar a sessão.' });
-        req.session.papel = staff[0].papel; req.session.usuario = staff[0].email; req.session.usuarioId = staff[0].id; req.session.usuarioNome = staff[0].nome;
-        res.json({ sucesso: true, tipo: staff[0].papel, redirect: '/admin.html' });
+        req.session.papel = staffUser.papel; req.session.usuario = staffUser.email; req.session.usuarioId = staffUser.id; req.session.usuarioNome = staffUser.nome;
+        res.json({ sucesso: true, tipo: staffUser.papel, redirect: '/admin.html' });
       });
     }
     const rows = await prisma.$executeRaw`SELECT id,nome,email,senha_hash FROM cidadaos WHERE LOWER(email)= ${login} LIMIT 1`;
@@ -291,10 +297,10 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { console.error('Erro no login:', e); res.status(500).json({ mensagem: 'Erro interno no servidor.' }); }
 });
 
-app.post('/api/logout', (req, res) => req.session.destroy(() => res.json({ sucesso: true })));
-app.get('/api/admin/me', (req, res) => req.session?.papel ? res.json({ autenticado: true, usuario: req.session.usuario || req.session.cidadaoEmail, papel: req.session.papel }) : res.status(401).json({ autenticado: false }));
+app.post('/api/logout', (req: Request, res: Response) => req.session.destroy(() => res.json({ sucesso: true })));
+app.get('/api/admin/me', (req: Request, res: Response) => req.session?.papel ? res.json({ autenticado: true, usuario: req.session.usuario || req.session.cidadaoEmail, papel: req.session.papel }) : res.status(401).json({ autenticado: false }));
 
-app.post('/api/cidadao/cadastro', async (req, res) => {
+app.post('/api/cidadao/cadastro', async (req: Request, res: Response) => {
   const nome = texto(req.body.nome), email = texto(req.body.email).toLowerCase(), senha = typeof req.body.senha === 'string' ? req.body.senha : '', telefone = texto(req.body.telefone), cep = texto(req.body.cep), endereco = texto(req.body.endereco);
   if (!nome || !email || !senha) return res.status(400).json({ mensagem: 'Nome, e-mail e senha são obrigatórios.' });
   if (senha.length < 6) return res.status(400).json({ mensagem: 'A senha deve ter pelo menos 6 caracteres.' });
@@ -308,13 +314,13 @@ app.post('/api/cidadao/cadastro', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível criar a conta.' }); }
 });
 
-app.get('/api/cidadao/me', exigirCidadao, async (req, res) => {
+app.get('/api/cidadao/me', exigirCidadao, async (req: Request, res: Response) => {
   try { const rows = await prisma.$executeRaw`SELECT id,nome,email,telefone FROM cidadaos WHERE id=${req.session.cidadaoId}`;
    if (!rows.length) return res.status(401).json({ mensagem: 'Conta não encontrada.' }); res.json({ cidadao: rows }); }
   catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar a conta.' }); }
 });
 
-app.get('/api/cidadao/meus-agendamentos', exigirCidadao, async (req, res) => {
+app.get('/api/cidadao/meus-agendamentos', exigirCidadao, async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$executeRaw`SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%d/%m/%Y') data_br,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.status,a.atendimento FROM agendamentos a WHERE a.cidadao_id=${req.session.cidadaoId} ORDER BY a.data DESC,a.horario DESC,a.id DESC`;
     const cid = await prisma.$executeRaw`SELECT id,nome,email,telefone FROM cidadaos WHERE id=${req.session.cidadaoId}`;
@@ -322,21 +328,21 @@ app.get('/api/cidadao/meus-agendamentos', exigirCidadao, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar seus agendamentos.' }); }
 });
 
-app.patch('/api/cidadao/agendamentos/:id/cancelar', exigirCidadao, async (req, res) => {
+app.patch('/api/cidadao/agendamentos/:id/cancelar', exigirCidadao, async (req: Request, res: Response) => {
   const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
   const conn = await prisma.$connect();
   try { await conn.beginTransaction(); const [r] = await conn.execute("UPDATE agendamentos SET status='cancelado' WHERE id=? AND cidadao_id=? AND status='pedido_pendente'", [id, req.session.cidadaoId]); if (!r.affectedRows) { await conn.rollback(); return res.status(404).json({ mensagem: 'Agendamento não encontrado ou não pode mais ser cancelado.' }); } await conn.execute('DELETE FROM agendamento_slots WHERE agendamento_id=?', [id]); await conn.commit(); res.json({ sucesso: true }); }
   catch (e) { await conn.rollback(); console.error(e); res.status(500).json({ mensagem: 'Não foi possível cancelar o agendamento.' }); } finally { conn.release(); }
 });
 
-app.get('/api/agendamentos/disponiveis', async (req, res) => {
+app.get('/api/agendamentos/disponiveis', async (req: Request, res: Response) => {
   const data = texto(req.query.data);
   if (!dataValida(data)) return res.status(400).json({ mensagem: 'Data inválida.' });
   if (!diaUtil(data)) return res.json({ horariosOcupados: [], horariosDisponiveis: [] });
   res.json({ horariosOcupados: [], horariosDisponiveis: HORARIOS });
 });
 
-app.post('/api/agendamentos', exigirCidadao, async (req, res) => {
+app.post('/api/agendamentos', exigirCidadao, async (req: Request, res: Response) => {
   const motivo = texto(req.body.motivo), data = texto(req.body.data), horario = texto(req.body.horario);
   if (!motivo || !data || !horario) return res.status(400).json({ mensagem: 'Informe o motivo, a data e o horário.' });
   if (!dataValida(data) || data < hoje() || !diaUtil(data) || !HORARIOS.includes(horario)) return res.status(400).json({ mensagem: 'Data ou horário inválido.' });
@@ -363,13 +369,13 @@ function aplicarBuscaAgendamentos(req, isViewer) {
   return { where, params };
 }
 
-app.get('/api/admin/horarios', exigirStaff, async (req, res) => {
+app.get('/api/admin/horarios', exigirStaff, async (req: Request, res: Response) => {
   const data = texto(req.query.data);
   if (!dataValida(data) || !diaUtil(data)) return res.json({ horariosOcupados: [], horariosDisponiveis: [] });
   res.json({ horariosOcupados: [], horariosDisponiveis: HORARIOS });
 });
 
-app.get('/api/admin/agendamentos', exigirStaff, async (req, res) => {
+app.get('/api/admin/agendamentos', exigirStaff, async (req: Request, res: Response) => {
   try {
     const isViewer = req.session.papel === 'visualizador'; const { where, params } = aplicarBuscaAgendamentos(req, isViewer);
     const limit = 500;
@@ -380,7 +386,7 @@ app.get('/api/admin/agendamentos', exigirStaff, async (req, res) => {
   } catch (e) { res.status(400).json({ mensagem: e.message || 'Não foi possível carregar os agendamentos.' }); }
 });
 
-app.get('/api/admin/agendamentos/:id/detalhes', exigirAdmin, async (req, res) => {
+app.get('/api/admin/agendamentos/:id/detalhes', exigirAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
   try {
@@ -390,14 +396,14 @@ app.get('/api/admin/agendamentos/:id/detalhes', exigirAdmin, async (req, res) =>
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os detalhes.' }); }
 });
 
-app.get('/api/admin/pendencias', exigirAdmin, async (req, res) => {
+app.get('/api/admin/pendencias', exigirAdmin, async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$executeRaw`SELECT a.id,a.nome,a.motivo,a.tratativa,DATE_FORMAT(a.data,'%Y-%m-%d') data,TIME_FORMAT(a.horario,'%H:%i') horario,a.email,a.telefone,a.status,a.atendimento FROM agendamentos a WHERE a.status='pedido_pendente' AND (a.tratativa IS NULL OR TRIM(a.tratativa)='') ORDER BY a.data ASC,a.horario ASC,a.id ASC`;
     res.json({ agendamentos: rows });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar as pendências.' }); }
 });
 
-app.post('/api/admin/agendamentos', exigirAdmin, async (req, res) => {
+app.post('/api/admin/agendamentos', exigirAdmin, async (req: Request, res: Response) => {
   const nome = texto(req.body.nome), email = texto(req.body.email).toLowerCase(), telefone = texto(req.body.telefone), endereco = texto(req.body.endereco), motivo = texto(req.body.motivo), data = texto(req.body.data), horario = texto(req.body.horario), atendimento = valorAtendimento(texto(req.body.atendimento)) || 'no_paco', tipo = valorTipo(texto(req.body.tipo_atendimento)) || 'unico';
   const participantes = normalizarParticipantes(req.body.participantes);
   const blocos = blocosValidos(req.body.blocos);
@@ -420,7 +426,7 @@ app.post('/api/admin/agendamentos', exigirAdmin, async (req, res) => {
   } catch (e) { await conn.rollback(); if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ mensagem: 'Um ou mais blocos de horário já estão ocupados.' }); console.error(e); res.status(500).json({ mensagem: 'Não foi possível criar o atendimento.' }); } finally { conn.release(); }
 });
 
-app.patch('/api/admin/agendamentos/:id', exigirAdmin, async (req, res) => {
+app.patch('/api/admin/agendamentos/:id', exigirAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id), nome = texto(req.body.nome), email = texto(req.body.email), telefone = texto(req.body.telefone), endereco = texto(req.body.endereco), motivo = texto(req.body.motivo), data = texto(req.body.data), horario = texto(req.body.horario), status = valorStatus(texto(req.body.status)), atendimento = valorAtendimento(texto(req.body.atendimento)), tratativa = texto(req.body.tratativa), tipo = valorTipo(texto(req.body.tipo_atendimento)) || 'unico';
   const participantes = normalizarParticipantes(req.body.participantes), blocos = blocosValidos(req.body.blocos);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
@@ -441,7 +447,7 @@ app.patch('/api/admin/agendamentos/:id', exigirAdmin, async (req, res) => {
   } catch (e) { await conn.rollback(); if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ mensagem: 'Um ou mais blocos de horário já estão ocupados.' }); console.error(e); res.status(500).json({ mensagem: 'Não foi possível editar o atendimento.' }); } finally { conn.release(); }
 });
 
-app.delete('/api/admin/agendamentos/:id', exigirStaff, async (req, res) => {
+app.delete('/api/admin/agendamentos/:id', exigirStaff, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
   try {
@@ -451,7 +457,7 @@ app.delete('/api/admin/agendamentos/:id', exigirStaff, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível excluir o atendimento.' }); }
 });
 
-app.patch('/api/admin/agendamentos/:id/status', exigirAdmin, async (req, res) => {
+app.patch('/api/admin/agendamentos/:id/status', exigirAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id), status = valorStatus(texto(req.body.status)), tratativa = texto(req.body.tratativa);
   if (!Number.isInteger(id) || id < 1 || !status) return res.status(400).json({ mensagem: 'Status inválido.' });
   if (status === 'pedido_atendido' && !tratativa) return res.status(400).json({ mensagem: 'Informe a tratativa ao concluir o atendimento.' });
@@ -465,7 +471,7 @@ app.patch('/api/admin/agendamentos/:id/status', exigirAdmin, async (req, res) =>
   } catch (e) { await conn.rollback(); if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ mensagem: 'O horário está ocupado por outro atendimento.' }); console.error(e); res.status(500).json({ mensagem: 'Não foi possível alterar o status.' }); } finally { conn.release(); }
 });
 
-app.get('/api/admin/usuarios', exigirAdmin, async (req, res) => {
+app.get('/api/admin/usuarios', exigirAdmin, async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$executeRaw`SELECT id,nome,email,papel,DATE_FORMAT(criado_em,'%d/%m/%Y %H:%i') criado_em FROM usuarios_admin ORDER BY nome ASC`;
 
@@ -478,9 +484,9 @@ app.get('/api/admin/usuarios', exigirAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/usuarios', exigirAdmin, async (req, res) => { const nome = texto(req.body.nome), email = texto(req.body.email).toLowerCase(), senha = typeof req.body.senha === 'string' ? req.body.senha : '', papel = texto(req.body.papel); if (!nome || !email || senha.length < 6 || !['admin', 'visualizador'].includes(papel)) return res.status(400).json({ mensagem: 'Nome, e-mail, senha e perfil válidos são obrigatórios.' }); try { const [ex] = await prisma.$queryRaw`SELECT id FROM usuarios_admin WHERE email=${email}`; if (ex.length) return res.status(409).json({ mensagem: 'Já existe um usuário com esse e-mail.' }); const hash = await bcrypt.hash(senha, 12); await prisma.$queryRaw`INSERT INTO usuarios_admin (nome,email,senha_hash,papel) VALUES (${nome},${email},${hash},${papel})`;
+app.post('/api/admin/usuarios', exigirAdmin, async (req: Request, res: Response) => { const nome = texto(req.body.nome), email = texto(req.body.email).toLowerCase(), senha = typeof req.body.senha === 'string' ? req.body.senha : '', papel = texto(req.body.papel); if (!nome || !email || senha.length < 6 || !['admin', 'visualizador'].includes(papel)) return res.status(400).json({ mensagem: 'Nome, e-mail, senha e perfil válidos são obrigatórios.' }); try { const [ex] = await prisma.$queryRaw`SELECT id FROM usuarios_admin WHERE email=${email}`; if (ex.length) return res.status(409).json({ mensagem: 'Já existe um usuário com esse e-mail.' }); const hash = await bcrypt.hash(senha, 12); await prisma.$queryRaw`INSERT INTO usuarios_admin (nome,email,senha_hash,papel) VALUES (${nome},${email},${hash},${papel})`;
  res.status(201).json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível criar o usuário.' }); } });
-app.patch('/api/admin/usuarios/:id', exigirAdmin, async (req, res) => {
+app.patch('/api/admin/usuarios/:id', exigirAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id), senha = typeof req.body.senha === 'string' ? req.body.senha : '', papel = texto(req.body.papel), nome = texto(req.body.nome); if (!Number.isInteger(id) || !nome || !['admin', 'visualizador'].includes(papel)) return res.status(400).json({ mensagem: 'Dados inválidos.' }); try {
     if (senha) {
       if (senha.length < 6) return res.status(400).json({ mensagem: 'A senha deve ter pelo menos 6 caracteres.' }); const hash = await bcrypt.hash(senha, 12);
@@ -489,22 +495,22 @@ app.patch('/api/admin/usuarios/:id', exigirAdmin, async (req, res) => {
      res.json({ sucesso: true });
   } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível alterar o usuário.' }); }
 });
-app.delete('/api/admin/usuarios/:id', exigirAdmin, async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); if (id === req.session.usuarioId) return res.status(400).json({ mensagem: 'Você não pode excluir o próprio usuário nesta tela.' }); try { const [r] = await prisma.$queryRaw`DELETE FROM usuarios_admin WHERE id=${id}`; if (!r.affectedRows) return res.status(404).json({ mensagem: 'Usuário não encontrado.' }); res.json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível excluir o usuário.' }); } });
+app.delete('/api/admin/usuarios/:id', exigirAdmin, async (req: Request, res: Response) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); if (id === req.session.usuarioId) return res.status(400).json({ mensagem: 'Você não pode excluir o próprio usuário nesta tela.' }); try { const [r] = await prisma.$queryRaw`DELETE FROM usuarios_admin WHERE id=${id}`; if (!r.affectedRows) return res.status(404).json({ mensagem: 'Usuário não encontrado.' }); res.json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível excluir o usuário.' }); } });
 
-app.get('/api/admin/cidadaos', exigirAdmin, async (req, res) => { const busca = texto(req.query.busca); try { const where = []; const params = []; if (busca) { const t = `%${busca}%`; where.push('(c.nome LIKE ? OR c.email LIKE ? OR c.telefone LIKE ?)'); params.push(t, t, t); } const rows = await prisma.$queryRawUnsafe(`SELECT c.id,c.nome,c.email,c.telefone,DATE_FORMAT(c.criado_em,'%d/%m/%Y %H:%i') criado_em FROM cidadaos c ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY c.nome ASC LIMIT 500`, ...params); res.json({ cidadaos: rows }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os cidadãos.' }); } });
-app.get('/api/admin/cidadaos/:id', exigirAdmin, async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); try { const c = await prisma.$queryRaw`SELECT id,nome,email,telefone,DATE_FORMAT(criado_em,\'%d/%m/%Y %H:%i\') criado_em FROM cidadaos WHERE id=${id}`; if (!c.length) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); const a = await prisma.$queryRaw`SELECT id,motivo,DATE_FORMAT(data,'%d/%m/%Y') data_br,TIME_FORMAT(horario,'%H:%i') horario,status,atendimento,tratativa FROM agendamentos WHERE cidadao_id=${id} ORDER BY data DESC,horario DESC,id DESC`; res.json({ cidadao: c[0], agendamentos: a }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar o cidadão.' }); } });
-app.patch('/api/admin/cidadaos/:id/senha', exigirAdmin, async (req, res) => { const id = Number(req.params.id), senha = typeof req.body.senha === 'string' ? req.body.senha : ''; if (!Number.isInteger(id) || senha.length < 6) return res.status(400).json({ mensagem: 'Informe uma senha com pelo menos 6 caracteres.' }); try { const hash = await bcrypt.hash(senha, 12); const [r] = await prisma.$queryRaw`UPDATE cidadaos SET senha_hash=${hash} WHERE id=${id}`; if (!r.affectedRows) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); res.json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível alterar a senha.' }); } });
+app.get('/api/admin/cidadaos', exigirAdmin, async (req: Request, res: Response) => { const busca = texto(req.query.busca); try { const where = []; const params = []; if (busca) { const t = `%${busca}%`; where.push('(c.nome LIKE ? OR c.email LIKE ? OR c.telefone LIKE ?)'); params.push(t, t, t); } const rows = await prisma.$queryRawUnsafe(`SELECT c.id,c.nome,c.email,c.telefone,DATE_FORMAT(c.criado_em,'%d/%m/%Y %H:%i') criado_em FROM cidadaos c ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY c.nome ASC LIMIT 500`, ...params); res.json({ cidadaos: rows }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os cidadãos.' }); } });
+app.get('/api/admin/cidadaos/:id', exigirAdmin, async (req: Request, res: Response) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' }); try { const c = await prisma.$queryRaw`SELECT id,nome,email,telefone,DATE_FORMAT(criado_em,\'%d/%m/%Y %H:%i\') criado_em FROM cidadaos WHERE id=${id}`; if (!c.length) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); const a = await prisma.$queryRaw`SELECT id,motivo,DATE_FORMAT(data,'%d/%m/%Y') data_br,TIME_FORMAT(horario,'%H:%i') horario,status,atendimento,tratativa FROM agendamentos WHERE cidadao_id=${id} ORDER BY data DESC,horario DESC,id DESC`; res.json({ cidadao: c[0], agendamentos: a }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar o cidadão.' }); } });
+app.patch('/api/admin/cidadaos/:id/senha', exigirAdmin, async (req: Request, res: Response) => { const id = Number(req.params.id), senha = typeof req.body.senha === 'string' ? req.body.senha : ''; if (!Number.isInteger(id) || senha.length < 6) return res.status(400).json({ mensagem: 'Informe uma senha com pelo menos 6 caracteres.' }); try { const hash = await bcrypt.hash(senha, 12); const [r] = await prisma.$queryRaw`UPDATE cidadaos SET senha_hash=${hash} WHERE id=${id}`; if (!r.affectedRows) return res.status(404).json({ mensagem: 'Cidadão não encontrado.' }); res.json({ sucesso: true }); } catch (e) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível alterar a senha.' }); } });
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'app', 'login.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '..', 'app', 'login.html')));
-app.get('/agendamento', (req, res) => res.sendFile(path.join(__dirname, '..', 'app', 'agendamento.html')));
-app.get('/admin', (req, res, next) => req.session?.papel === 'admin' || req.session?.papel === 'visualizador' ? res.sendFile(path.join(__dirname, '..', 'app', 'admin.html')) : res.redirect('/login.html'));
-app.get('/admin.html', (req, res, next) => req.session?.papel === 'admin' || req.session?.papel === 'visualizador' ? res.sendFile(path.join(__dirname, '..', 'app', 'admin.html')) : res.redirect('/login.html'));
-app.get('/cadastro', (req, res) => res.sendFile(path.join(__dirname, '..', 'app', 'cadastro.html')));
-app.get('/cidadao', (req, res) => req.session?.papel === 'cidadao' ? res.sendFile(path.join(__dirname, '..', 'app', 'cidadao.html')) : res.redirect('/login.html'));
-app.get('/cidadao.html', (req, res) => req.session?.papel === 'cidadao' ? res.sendFile(path.join(__dirname, '..', 'app', 'cidadao.html')) : res.redirect('/login.html'));
+app.get('/', (req: Request, res: Response) => res.sendFile(path.join(__dirname, '..', 'app', 'login.html')));
+app.get('/login', (req: Request, res: Response) => res.sendFile(path.join(__dirname, '..', 'app', 'login.html')));
+app.get('/agendamento', (req: Request, res: Response) => res.sendFile(path.join(__dirname, '..', 'app', 'agendamento.html')));
+app.get('/admin', (req: Request, res: Response, next:NextFunction) => req.session?.papel === 'admin' || req.session?.papel === 'visualizador' ? res.sendFile(path.join(__dirname, '..', 'app', 'admin.html')) : res.redirect('/login.html'));
+app.get('/admin.html', (req: Request, res: Response, next:NextFunction) => req.session?.papel === 'admin' || req.session?.papel === 'visualizador' ? res.sendFile(path.join(__dirname, '..', 'app', 'admin.html')) : res.redirect('/login.html'));
+app.get('/cadastro', (req: Request, res: Response) => res.sendFile(path.join(__dirname, '..', 'app', 'cadastro.html')));
+app.get('/cidadao', (req: Request, res: Response) => req.session?.papel === 'cidadao' ? res.sendFile(path.join(__dirname, '..', 'app', 'cidadao.html')) : res.redirect('/login.html'));
+app.get('/cidadao.html', (req: Request, res: Response) => req.session?.papel === 'cidadao' ? res.sendFile(path.join(__dirname, '..', 'app', 'cidadao.html')) : res.redirect('/login.html'));
 app.use(express.static(path.join(__dirname, '..', 'app')));
-app.use((req, res, next) => { if (req.method === 'GET' && !req.path.startsWith('/api/')) return res.sendFile(path.join(__dirname, '..', 'app', 'login.html')); next(); });
+app.use((req: Request, res: Response, next:NextFunction) => { if (req.method === 'GET' && !req.path.startsWith('/api/')) return res.sendFile(path.join(__dirname, '..', 'app', 'login.html')); next(); });
 
 async function iniciar() {
   try { await prepararBanco(); console.log('Banco de dados preparado com sucesso.'); app.listen(PORT, '0.0.0.0', () => console.log(`Servidor iniciado na porta ${PORT}`)); }

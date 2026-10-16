@@ -2,11 +2,11 @@
   "name": "v2",
   "version": "1.0.0",
   "description": "Sistema de agendamento com MySQL",
-  "main": "server/server.js",
+  "main": "src/server/server.ts",
   "type": "module",
   "scripts": {
-    "start": "node server/server.js",
-    "dev": "node server/server.js",
+    "start": "node /src/server.ts",
+    "dev": "node /src/server.js",
     "db:deploy": "npx prisma migrate deploy && npx prisma generate"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.19.0",
+    "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "dotenv": "^18.0.8",
     "prisma": "^7.10.0",

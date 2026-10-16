@@ -4,6 +4,9 @@
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
+    "lib":[
+      "es5", "es6", "dom", "DOM.Iterable"
+    ],
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
@@ -13,6 +16,12 @@
     "esModuleInterop": true,
     "ignoreDeprecations": "6.0",
     "types": [],
+    "typeRoots": [
+      "./node_modules/@types",
+      "src/@types"
+    ],
+
+    
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -43,5 +52,8 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "include": [
+      "./src/**/*"
+    ],
 }

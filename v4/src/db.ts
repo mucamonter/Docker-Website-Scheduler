@@ -1,8 +1,6 @@
 // @ts-check
-const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
-const { PrismaClient } = require('@prisma/client');
-const { DbNull } = require('@prisma/client/runtime/client');
-const { rootCertificates } = require('node:tls');
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaClient } from "@prisma/client/extension";
 
 
 const adapter = new PrismaMariaDb({
