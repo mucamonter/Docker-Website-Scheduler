@@ -1,7 +1,7 @@
 
 import express,  { type Request, type Response, type NextFunction } from 'express';
 import { defineConfig } from "prisma/config";
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from './generated/prisma/client';
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from 'bcryptjs';
 import { dataValida } from './db';
@@ -16,6 +16,8 @@ import { valorStatus } from './funcionts';
 import { valorTipo } from './funcionts';
 import { normalizarParticipantes } from './funcionts';
 import { blocosValidos } from './funcionts';
+import type { DataISO } from './types/data';
+import { agendamentos_tipo_atendimento } from './generated/prisma/enums';
 
 
 
@@ -37,7 +39,7 @@ const HORARIOS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00',
 const STATUS = ['cancelado', 'pedido_nao_atendido', 'pedido_atendido', 'pedido_pendente'];
 const ATENDIMENTO = ['no_paco', 'marcado'];
 
-const texto = (v:string) => typeof v === 'string' ? v.trim() : '';
+const texto  = (v:string) => typeof v === 'string' ? v.trim() : '';
 
 
 
@@ -170,8 +172,8 @@ app.get('/api/admin/agendamentos/:id/detalhes', exigirAdmin, async (req: Request
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) return res.status(400).json({ mensagem: 'ID inválido.' });
   try {
-    const p = await prisma.$executeRaw`SELECT nome,telefone,principal FROM agendamento_participantes WHERE agendamento_id=${id} ORDER BY principal DESC,id ASC`;
-    const s = await prisma.$executeRaw`SELECT TIME_FORMAT(horario_inicio,'%H:%i') horario FROM agendamento_slots WHERE agendamento_id=${id} ORDER BY horario_inicio ASC`;
+    const p = await prisma.$queryRaw`SELECT nome,telefone,principal FROM agendamento_participantes WHERE agendamento_id=${id} ORDER BY principal DESC,id ASC`;
+    const s = await prisma.$queryRaw<{ horario: string}>`SELECT TIME_FORMAT(horario_inicio,'%H:%i') AS horario FROM agendamento_slots WHERE agendamento_id=${id} ORDER BY horario_inicio ASC`;
     res.json({ participantes: p, blocos: s.map(x => x.horario) });
   } catch (e:any) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar os detalhes.' }); }
 });
@@ -183,15 +185,45 @@ app.get('/api/admin/pendencias', exigirAdmin, async (req: Request, res: Response
   } catch (e:any) { console.error(e); res.status(500).json({ mensagem: 'Não foi possível carregar as pendências.' }); }
 });
 
-app.post('/api/admin/agendamentos', exigirAdmin, async (req: Request, res: Response) => {
-  const nome = texto(req.body.nome), email = texto(req.body.email).toLowerCase(), telefone = texto(req.body.telefone), endereco = texto(req.body.endereco), motivo = texto(req.body.motivo), data = texto(req.body.data), horario = texto(req.body.horario), atendimento = valorAtendimento(texto(req.body.atendimento)) || 'no_paco', tipo : typeof valorTipo(texto(req.body.tipo_atendimento)) || 'unico';
-  const participantes = normalizarParticipantes(req.body.participantes);
-  const blocos = blocosValidos(req.body.blocos);
-  if (!nome || !motivo || !data) return res.status(400).json({ mensagem: 'Nome, motivo e data são obrigatórios.' });
-  if (!dataValida(data) || data < hoje() || !diaUtil(data)) return res.status(400).json({ mensagem: 'Data inválida.' });
-  if (tipo === 'grupo') { 
-    if (!participantes.length) return res.status(400).json({ mensagem: 'Adicione pelo menos o representante do grupo.' });
-    if (!blocos.length) return res.status(400).json({ mensagem: 'Selecione pelo menos um bloco de horário.' });
+app.post('/api/admin/agendamentos', exigirAdmin, async (req: Request, res: Response) => {   
+  const nome = texto(req.body.nome);
+  const email = texto(req.body.email).toLowerCase();
+  const telefone = texto(req.body.telefone);
+  const endereco = texto(req.body.endereco);
+  const motivo = texto(req.body.motivo);
+  const data = texto(req.body.data);
+  const horario = texto(req.body.horario);
+  
+  const atendimento = valorAtendimento(texto(req.body.atendimento) as DataISO ) || 'no_paco';
+
+  if (!dataValida(atendimento) || atendimento < hoje() || !diaUtil(atendimento)) { 
+  return res.status(400).json({ mensagem: 'Data inválida.' });   
+}
+  
+  // CORREÇÃO AQUI: Mudado de ":" para "=" e removido o "typeof"
+  const tipo = valorTipo(texto(req.body.tipo_atendimento) as DataISO) || 'unico';   
+  
+  const participantes = normalizarParticipantes(req.body.participantes);   
+  const blocos = blocosValidos(req.body.blocos);   
+  
+  // Validações de campos obrigatórios
+  if (!nome || !motivo || !data) {
+    return res.status(400).json({ mensagem: 'Nome, motivo e data são obrigatórios.' });   
+  }
+  
+  // Validações de regras de negócio da data
+  if (!dataValida(data) || data < hoje() || !diaUtil(data)) {
+    return res.status(400).json({ mensagem: 'Data inválida.' });   
+  }
+  
+  // Validações para atendimento em grupo
+  if (tipo === 'grupo') {      
+    if (!participantes.length) {
+      return res.status(400).json({ mensagem: 'Adicione pelo menos o representante do grupo.' });     
+    }
+    if (!blocos.length) {
+      return res.status(400).json({ mensagem: 'Selecione pelo menos um bloco de horário.' });   
+    }
   }
   try {
  
@@ -205,8 +237,22 @@ app.post('/api/admin/agendamentos', exigirAdmin, async (req: Request, res: Respo
       nome, email || null, telefone || null, endereco || null, motivo, data, `${(tipo === 'grupo' ? blocos[0] : horario)}:00`, atendimento, tipo, tipo === 'grupo' ? JSON.stringify(blocos) : null
     );
 
+    const novoAgendamento = await tx.prismaService.agendamento.create({
+      data: {
+        nome,
+        data,
+        horario,
+        atendimento,
+        agendamentos_tipo_atendimento,
+        motivo,
+        endereco,
+        blocos,
+      }
+    });
+    
+
     // Captura o ID gerado pelo auto_increment do INSERT anterior
-    const [{ id_gerado }] = await tx.$queryRawUnsafe<{ id_gerado: number }[]>('SELECT LAST_INSERT_ID() as id_gerado');
+    const id_gerado  = Number(resultado.id_gerado);
     
     const slots = tipo === 'grupo' ? blocos : [horario];
     

@@ -1,30 +1,20 @@
-FROM node:20-alpine AS builder
+FROM node:26-alpine
 WORKDIR /app
-
-
 
 COPY package*.json ./
 
-RUN npm ci --no-audit --no-fund
+RUN npm install
 
-RUN npm install dotenv
-
-
-COPY app ./app
-
-COPY src ./src
-
+COPY ./src/prisma ./src/prisma
 COPY prisma7.config.ts ./
 
+RUN DATABASE_URL="postgresql://mock:mock@localhost:5432/mock" npx prisma generate
 
-RUN npx prisma generate
+COPY app ./app
+COPY src ./src
 
-RUN npm prune --production
-
-
-ENV DATABASE_URL="mysql://root:Ardmim.186!@db:3306/V2_DB"
 
 
 COPY . .
 EXPOSE 3000
-CMD ["npm","start"]
+CMD ["sh", "-c", "npx prisma generate && npm start"]

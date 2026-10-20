@@ -1,6 +1,6 @@
 // @ts-check
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from './generated/prisma/client';
 import type { DataISO } from './types/data';
 import { defineConfig } from "prisma/config";
 

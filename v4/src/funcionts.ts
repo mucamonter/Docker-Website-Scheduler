@@ -69,3 +69,10 @@ export function blocosValidos(lista:any) {
   if (!Array.isArray(lista)) return [];
   return [...new Set(lista.map(texto))].filter(h => HORARIOS.includes(h));
 }
+
+export function ehDataISO(s:string): s is DataISO{
+const regexISO = /^\d{4}-\d{2}-\d{2}$/;
+if (regexISO.test(s)) return false;
+const data = new Date(s);
+return !isNaN(data.getTime());
+ }

@@ -16,6 +16,7 @@
  */
 
 import * as runtime from "@prisma/client/runtime/index-browser"
+import type { DataISO } from "../../../types/data"
 
 export type * from '../models'
 export type * from './prismaNamespace'
@@ -101,7 +102,7 @@ export const AgendamentosScalarFieldEnum = {
   nome: 'nome',
   motivo: 'motivo',
   tratativa: 'tratativa',
-  data: 'data',
+  data: data as unknown as DataISO,
   horario: 'horario',
   atendimento: 'atendimento',
   tipo_atendimento: 'tipo_atendimento',

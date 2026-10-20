@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./client"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model agendamento_participantes {
+  id             Int          @id @default(autoincrement()) @db.UnsignedInt
+  agendamento_id Int          @db.UnsignedInt
+  nome           String       @db.VarChar(150)
+  telefone       String?      @db.VarChar(30)
+  principal      Boolean      @default(false)
+  agendamentos   agendamentos @relation(fields: [agendamento_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_participante_agendamento")
+
+  @@index([agendamento_id], map: "idx_participante_agendamento")
+}
+
+model agendamento_slots {
+  id             BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  agendamento_id Int          @db.UnsignedInt
+  data           DateTime     @db.Date
+  horario_inicio DateTime     @db.Time(0)
+  agendamentos   agendamentos @relation(fields: [agendamento_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_slot_agendamento")
+
+  @@index([data, horario_inicio], map: "agenda_slot")
+  @@index([agendamento_id], map: "idx_slot_agendamento")
+}
+
+model agendamentos {
+  id                        Int                           @id @default(autoincrement()) @db.UnsignedInt
+  cidadao_id                Int?                          @db.UnsignedInt
+  nome                      String                        @db.VarChar(150)
+  motivo                    String?                       @db.Text
+  tratativa                 String?                       @db.Text
+  data                      DateTime                      @db.Date
+  horario                   DateTime                      @db.Time(0)
+  atendimento               agendamentos_atendimento      @default(marcado)
+  tipo_atendimento          agendamentos_tipo_atendimento @default(unico)
+  blocos_json               Json?
+  email                     String?                       @db.VarChar(255)
+  telefone                  String?                       @db.VarChar(30)
+  cep                       String?                       @db.VarChar(20)
+  endereco                  String?                       @db.VarChar(255)
+  data_registro             DateTime                      @default(now()) @db.DateTime(0)
+  status                    agendamentos_status           @default(pedido_pendente)
+  agendamento_participantes agendamento_participantes[]
+  agendamento_slots         agendamento_slots[]
+  cidadaos                  cidadaos?                     @relation(fields: [cidadao_id], references: [id], map: "fk_agendamento_cidadao")
+
+  @@index([cidadao_id], map: "idx_agendamento_cidadao")
+  @@index([data], map: "idx_agendamento_data")
+  @@index([nome], map: "idx_agendamento_nome")
+  @@index([status], map: "idx_agendamento_status")
+}
+
+model cidadaos {
+  id           Int            @id @default(autoincrement()) @db.UnsignedInt
+  nome         String         @db.VarChar(150)
+  email        String         @unique(map: "uk_cidadao_email") @db.VarChar(255)
+  telefone     String?        @db.VarChar(30)
+  senha_hash   String         @db.VarChar(255)
+  cep          String?        @db.VarChar(20)
+  endereco     String?        @db.VarChar(255)
+  criado_em    DateTime       @default(now()) @db.DateTime(0)
+  agendamentos agendamentos[]
+}
+
+model usuarios_admin {
+  id         Int                  @id @default(autoincrement()) @db.UnsignedInt
+  nome       String               @db.VarChar(150)
+  email      String               @unique(map: "uk_usuario_admin_email") @db.VarChar(255)
+  senha_hash String               @db.VarChar(255)
+  papel      usuarios_admin_papel @default(visualizador)
+  criado_em  DateTime             @default(now()) @db.DateTime(0)
+}
+
+enum usuarios_admin_papel {
+  admin
+  visualizador
+}
+
+enum agendamentos_atendimento {
+  no_paco
+  marcado
+}
+
+enum agendamentos_tipo_atendimento {
+  unico
+  grupo
+}
+
+enum agendamentos_status {
+  cancelado
+  pedido_nao_atendido
+  pedido_atendido
+  pedido_pendente
+}

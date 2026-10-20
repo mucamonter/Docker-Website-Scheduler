@@ -804,7 +804,7 @@ export type Agendamento_participantesScalarFieldEnum = (typeof Agendamento_parti
 export const Agendamento_slotsScalarFieldEnum = {
   id: 'id',
   agendamento_id: 'agendamento_id',
-  data: 'data',
+  data: data as unknown as DataISO,
   horario_inicio: 'horario_inicio'
 } as const
 
@@ -817,7 +817,7 @@ export const AgendamentosScalarFieldEnum = {
   nome: 'nome',
   motivo: 'motivo',
   tratativa: 'tratativa',
-  data: 'data',
+  data: data as unknown as DataISO,
   horario: 'horario',
   atendimento: 'atendimento',
   tipo_atendimento: 'tipo_atendimento',

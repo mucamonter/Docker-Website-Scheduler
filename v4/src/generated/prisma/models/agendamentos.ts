@@ -252,7 +252,7 @@ export type AgendamentosGroupByOutputType = {
   motivo: string | null
   tratativa: string | null
   data: Date
-  horario: Date
+  horario: Date | string
   atendimento: $Enums.agendamentos_atendimento
   tipo_atendimento: $Enums.agendamentos_tipo_atendimento
   blocos_json: runtime.JsonValue | null
@@ -1172,7 +1172,7 @@ export type $agendamentosPayload<ExtArgs extends runtime.Types.Extensions.Intern
     motivo: string | null
     tratativa: string | null
     data: Date
-    horario: Date
+    horario: Date | string
     atendimento: $Enums.agendamentos_atendimento
     tipo_atendimento: $Enums.agendamentos_tipo_atendimento
     blocos_json: runtime.JsonValue | null

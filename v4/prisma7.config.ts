@@ -1,12 +1,14 @@
 // prisma7.config.ts
-import { defineConfig } from "prisma/config";
-import "dotenv"
+import { defineConfig, env } from "prisma/config";
+
 
 export default defineConfig({
-  schema: "src/prisma/schema.prisma",
+  schema: "./src/prisma/schema.prisma",
   datasource: {
     
-    url: "mysql://root:Ardmin321@localhost:3306/V2_DB?connection_timeout=30", 
+    url: env('DATABASE_URL') || "postgresql://mock:mock@localhost:5432/mock", 
   },
   
 });
+
+
