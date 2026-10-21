@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Painel Administrativo</title>
+<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="../style.css">
+
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div><h2>Painel de atendimento</h2><p id="perfil"></p></div>
+    <div class="top-actions"><button id="novoAtendimento">Novo atendimento</button><button id="sair" class="sec">Sair</button></div>
+  </div>
+
+  <div class="tabs">
+    <button id="abaAtendimentos" class="ativo">Atendimentos Cadastrados</button>
+    <button id="abaPendencias">Pendências</button>
+    <button id="abaUsuarios" class="admin-only">Usuários</button>
+    <button id="abaCidadaos" class="admin-only">Cidadãos Cadastrados</button>
+  </div>
+
+  <section id="painelAtendimentos" class="painel">
+    <div class="filtros">
+      
+      <input id="busca" placeholder="Buscar nome, e-mail, telefone, CEP, endereço, motivo, participante...">
+      <input id="filtroData" type="date">
+      <select id="filtroAtendimento"><option value="">Todos os atendimentos</option><option value="marcado">Telefone</option><option value="no_paco">No Paço</option></select>
+      <select id="filtroStatus"><option value="">Todos os status</option><option value="pedido_pendente">Pendente</option><option value="pedido_atendido">Atendido</option><option value="pedido_nao_atendido">Não atendido</option><option value="cancelado">Cancelado</option></select>
+    </div>
+    <style>
+    </style>
+    <div id="mensagem"></div>
+    <div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Atendimentos Salvos</th><th>Cidadão / Grupo</th><th>Telefone</th><th>Endereço</th><th>Motivo</th><th>Tratativa</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tabela"></tbody></table></div>
+  </section>
+
+  <section id="painelPendencias" class="painel hidden">
+    <h3>Pedidos pendentes sem tratativa</h3><p class="small">Mostra somente pedidos ainda pendentes e sem conclusão registrada.</p>
+    <div id="msgPendencias"></div><div class="tabela-wrap"><table><thead><tr><th>Data</th><th>Horário</th><th>Cidadão</th><th>Telefone</th><th>Motivo</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tabelaPendencias"></tbody></table></div>
+  </section>
+
+  <section id="painelUsuarios" class="painel hidden admin-only">
+    <div class="topbar"><div><h3>Usuários do painel</h3><p class="small">Somente administradores.</p></div><button id="novoUsuario">Criar usuário</button></div>
+    <div id="msgUsuarios"></div><div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Criado em</th><th>Ações</th></tr></thead><tbody id="tabelaUsuarios"></tbody></table></div>
+  </section>
+
+  <section id="painelCidadaos" class="painel hidden admin-only">
+    <h3>Cidadãos</h3><p class="small">Consulte contas de cidadãos, altere a senha e veja os agendamentos do cidadão selecionado.</p>
+    <div class="filtros"><input id="buscaCidadao" placeholder="Buscar por nome, e-mail ou telefone..."><button id="buscarCidadao">Buscar</button></div>
+    <div id="msgCidadaos"></div><div class="tabela-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Criado em</th><th>Ação</th></tr></thead><tbody id="tabelaCidadaos"></tbody></table></div>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="modalAtendimento">
+  <div class="modal">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+  <h3 id="tituloAtendimento">Novo atendimento</h3>
+  <button type="button" id="toggleGrupo" class="sec">Atendimento em grupo</button>
+</div>
+<form id="formAtendimento">
+  <input type="hidden" id="editId">
+  <input type="hidden" id="editTipo">
+  <div class="grid">
+  <div id="campoNome" class="full">
+  <label>Nome</label>
+  <input id="editNome" required>
+  </div>
+  <div id="campoTelefone">
+    <label>Telefone</label>
+    <input id="editTelefone" type="number">
+  </div>
+  <div id="campoEndereco">
+    <label>Endereço</label>
+    <input id="editEndereco" maxlength="255">
+  </div>
+  <div>
+  <label>Atendimento</label>
+
+  <select id="editAtendimento">
+  <option value="no_paco">No Paço</option>
+  <option value="marcado">Telefone</option>
+  </select>
+  </div>
+  
+  <div>
+   <label>Data</label>
+   <input id="editData" type="date" required>
+  </div><div id="campoHorario">
+    
+  <label>Horário</label>
+  <input type="time" id="editHorario">
+  </div>
+  
+  <div id="blocoGrupo" class="full hidden">
+    <label>Participantes <span class="small">O primeiro é o representante. Para os demais, informe somente o nome.</span></label>
+    <div id="participantes" class="participantes">
+    </div>
+    
+    <button type="button" id="adicionarParticipante" class="sec">+ Adicionar pessoa</button>
+  </div>
+
+  <div id="blocoHorariosGrupo" class="full hidden">
+    <div class="grid">
+      <div>
+        <label>Início</label>
+        <select id="grupoInicio"></select>
+      </div>
+      <div><label>Fim</label><select id="grupoFim"></select></div>
+    </div>
+    
+    <div id="mensagemHorariosGrupo" class="small"></div></div>
+    
+    <div class="full">
+      <label>Motivo</label>
+      <textarea id="editMotivo" required></textarea></div>
+      <div><label>Status</label>
+        <select id="editStatus">
+          <option value="pedido_pendente">Pendente</option>
+          <option value="no_paco">No Paço</option>
+          <option value="pedido_atendido">Atendido</option>
+          <option value="cancelado">Cancelado</option>
+        </select></div>
+        <div>
+          <label>Tratativa <span class="small">(obrigatória ao concluir)</span></label>
+          <textarea id="editTratativa" placeholder="Descreva a conclusão do atendimento"></textarea></div>
+        </div>
+        
+        <div class="acoes-modal">
+          <button type="button" id="fecharAtendimento" class="sec">Voltar</button>
+          <button type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<div class="modal-backdrop" id="modalUsuario"><div class="modal"><h3 id="tituloUsuario">Criar usuário</h3><form id="formUsuario"><input type="hidden" id="usuarioId"><div class="grid"><div><label>Nome</label><input id="usuarioNome" required></div><div><label>E-mail</label><input id="usuarioEmail" type="email" required></div><div><label>Perfil</label><select id="usuarioPapel"><option value="visualizador">Balconista</option><option value="admin">Administrador</option></select></div><div><label>Senha</label><input id="usuarioSenha" type="password" minlength="6" placeholder="Mínimo 6 caracteres"></div></div><div id="msgUsuarioForm"></div><div class="acoes-modal"><button type="button" id="fecharUsuario" class="sec">Voltar</button><button type="submit">Salvar</button></div></form></div></div>
+
+<div class="modal-backdrop" id="modalCidadao">
+  <div class="modal">
+    <h3>Conta do cidadão</h3>
+    <div id="detalheCidadao"></div>
+    <hr>
+    <h4>Alterar senha</h4>
+    <form id="formSenha">
+      <input type="hidden" id="senhaCidadaoId">
+      <input id="novaSenha" type="password" minlength="6" placeholder="Nova senha" required>
+      <button type="submit">Alterar senha</button>
+    </form>
+    <div id="msgSenha"></div><hr><h4>Agendamentos</h4><div id="agendamentosCidadao"></div><div class="acoes-modal"><button type="button" id="fecharCidadao" class="sec">Fechar</button></div></div></div>
+
+</body>
+
+</html>

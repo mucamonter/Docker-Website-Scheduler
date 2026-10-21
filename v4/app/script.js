@@ -34,6 +34,17 @@ function validarData(input){
     }
     atualizarHorariosDisponiveis(input.value);
 }
+async function verificar(id){
+  return await prisma.carregarUsuarios({
+    where: {id},
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      papel: true,
+    },
+  })
+}
 
 async function atualizarHorariosDisponiveis(data){
     if(!data)return;
@@ -45,6 +56,8 @@ async function atualizarHorariosDisponiveis(data){
 
 async function buscarCidadaos(termo){ return carregarMeuCadastro(); }
 async function carregarMeuCadastro(){
+ 
+
  const aviso=document.getElementById('avisoCadastro');
  const campo=document.getElementById('nomeIdentificacao');
  aviso.textContent='';
@@ -65,6 +78,7 @@ async function carregarMeuCadastro(){
   const o=document.createElement('option');o.value=d.cidadao.nome;list.appendChild(o);
   return true;
  }catch(e){aviso.textContent=e.message;aviso.style.color='#b00020';return false;}
+ 
 }
 
 document.querySelectorAll('input[name="temCadastro"]').forEach(r=>r.addEventListener('change',()=>{

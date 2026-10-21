@@ -28,10 +28,11 @@ services:
     
         
     restart: unless-stopped
+    env_file:
+      - .env
     volumes:
         - .:/app
         - /app/node_modules
-        - /app/generated
     environment:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -43,7 +44,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       PORT: 3000
       env_file: .env
-      command: npm run dev
+      command: sh -c "pnpm exec prisma db push --schema=prisma/schema.prisma && pnpm start"
       NODE_ENV: development
     depends_on:
       db:
