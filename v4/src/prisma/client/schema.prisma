@@ -66,6 +66,7 @@ model cidadaos {
   endereco     String?        @db.VarChar(255)
   criado_em    DateTime       @default(now()) @db.DateTime(0)
   agendamentos agendamentos[]
+  usuario      String?        @unique(map: "uk_usuario_admin_email") @db.VarChar(50)
 }
 
 model usuarios_admin {
@@ -75,6 +76,7 @@ model usuarios_admin {
   senha_hash String               @db.VarChar(255)
   papel      usuarios_admin_papel @default(visualizador)
   criado_em  DateTime             @default(now()) @db.DateTime(0)
+  usuario    String?              @unique(map: "uk_usuario_admin_usuario") @db.VarChar(50)
 }
 
 enum usuarios_admin_papel {

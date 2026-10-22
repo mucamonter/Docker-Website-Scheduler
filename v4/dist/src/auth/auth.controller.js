@@ -77,7 +77,9 @@ let AuthController = class AuthController {
         if (staffUser && (await bcrypt.compare(senha, staffUser.senha_hash))) {
             req.session.papel = staffUser.papel;
             req.session.usuario = staffUser.email;
+            return { sucesso: true, tipo: 'cidadao', redirect: '/cidadao.html' };
         }
+        throw new common_1.UnauthorizedException('Usuário ou senha inválidos');
     }
 };
 exports.AuthController = AuthController;

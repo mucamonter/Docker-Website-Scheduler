@@ -4471,6 +4471,7 @@ export namespace Prisma {
     cep: string | null
     endereco: string | null
     criado_em: Date | null
+    usuario: string | null
   }
 
   export type CidadaosMaxAggregateOutputType = {
@@ -4482,6 +4483,7 @@ export namespace Prisma {
     cep: string | null
     endereco: string | null
     criado_em: Date | null
+    usuario: string | null
   }
 
   export type CidadaosCountAggregateOutputType = {
@@ -4493,6 +4495,7 @@ export namespace Prisma {
     cep: number
     endereco: number
     criado_em: number
+    usuario: number
     _all: number
   }
 
@@ -4514,6 +4517,7 @@ export namespace Prisma {
     cep?: true
     endereco?: true
     criado_em?: true
+    usuario?: true
   }
 
   export type CidadaosMaxAggregateInputType = {
@@ -4525,6 +4529,7 @@ export namespace Prisma {
     cep?: true
     endereco?: true
     criado_em?: true
+    usuario?: true
   }
 
   export type CidadaosCountAggregateInputType = {
@@ -4536,6 +4541,7 @@ export namespace Prisma {
     cep?: true
     endereco?: true
     criado_em?: true
+    usuario?: true
     _all?: true
   }
 
@@ -4634,6 +4640,7 @@ export namespace Prisma {
     cep: string | null
     endereco: string | null
     criado_em: Date
+    usuario: string | null
     _count: CidadaosCountAggregateOutputType | null
     _avg: CidadaosAvgAggregateOutputType | null
     _sum: CidadaosSumAggregateOutputType | null
@@ -4664,6 +4671,7 @@ export namespace Prisma {
     cep?: boolean
     endereco?: boolean
     criado_em?: boolean
+    usuario?: boolean
     agendamentos?: boolean | cidadaos$agendamentosArgs<ExtArgs>
     _count?: boolean | CidadaosCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cidadaos"]>
@@ -4679,9 +4687,10 @@ export namespace Prisma {
     cep?: boolean
     endereco?: boolean
     criado_em?: boolean
+    usuario?: boolean
   }
 
-  export type cidadaosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nome" | "email" | "telefone" | "senha_hash" | "cep" | "endereco" | "criado_em", ExtArgs["result"]["cidadaos"]>
+  export type cidadaosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nome" | "email" | "telefone" | "senha_hash" | "cep" | "endereco" | "criado_em" | "usuario", ExtArgs["result"]["cidadaos"]>
   export type cidadaosInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     agendamentos?: boolean | cidadaos$agendamentosArgs<ExtArgs>
     _count?: boolean | CidadaosCountOutputTypeDefaultArgs<ExtArgs>
@@ -4701,6 +4710,7 @@ export namespace Prisma {
       cep: string | null
       endereco: string | null
       criado_em: Date
+      usuario: string | null
     }, ExtArgs["result"]["cidadaos"]>
     composites: {}
   }
@@ -5079,6 +5089,7 @@ export namespace Prisma {
     readonly cep: FieldRef<"cidadaos", 'String'>
     readonly endereco: FieldRef<"cidadaos", 'String'>
     readonly criado_em: FieldRef<"cidadaos", 'DateTime'>
+    readonly usuario: FieldRef<"cidadaos", 'String'>
   }
     
 
@@ -5496,6 +5507,7 @@ export namespace Prisma {
     senha_hash: string | null
     papel: $Enums.usuarios_admin_papel | null
     criado_em: Date | null
+    usuario: string | null
   }
 
   export type Usuarios_adminMaxAggregateOutputType = {
@@ -5505,6 +5517,7 @@ export namespace Prisma {
     senha_hash: string | null
     papel: $Enums.usuarios_admin_papel | null
     criado_em: Date | null
+    usuario: string | null
   }
 
   export type Usuarios_adminCountAggregateOutputType = {
@@ -5514,6 +5527,7 @@ export namespace Prisma {
     senha_hash: number
     papel: number
     criado_em: number
+    usuario: number
     _all: number
   }
 
@@ -5533,6 +5547,7 @@ export namespace Prisma {
     senha_hash?: true
     papel?: true
     criado_em?: true
+    usuario?: true
   }
 
   export type Usuarios_adminMaxAggregateInputType = {
@@ -5542,6 +5557,7 @@ export namespace Prisma {
     senha_hash?: true
     papel?: true
     criado_em?: true
+    usuario?: true
   }
 
   export type Usuarios_adminCountAggregateInputType = {
@@ -5551,6 +5567,7 @@ export namespace Prisma {
     senha_hash?: true
     papel?: true
     criado_em?: true
+    usuario?: true
     _all?: true
   }
 
@@ -5647,6 +5664,7 @@ export namespace Prisma {
     senha_hash: string
     papel: $Enums.usuarios_admin_papel
     criado_em: Date
+    usuario: string | null
     _count: Usuarios_adminCountAggregateOutputType | null
     _avg: Usuarios_adminAvgAggregateOutputType | null
     _sum: Usuarios_adminSumAggregateOutputType | null
@@ -5675,6 +5693,7 @@ export namespace Prisma {
     senha_hash?: boolean
     papel?: boolean
     criado_em?: boolean
+    usuario?: boolean
   }, ExtArgs["result"]["usuarios_admin"]>
 
 
@@ -5686,9 +5705,10 @@ export namespace Prisma {
     senha_hash?: boolean
     papel?: boolean
     criado_em?: boolean
+    usuario?: boolean
   }
 
-  export type usuarios_adminOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nome" | "email" | "senha_hash" | "papel" | "criado_em", ExtArgs["result"]["usuarios_admin"]>
+  export type usuarios_adminOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nome" | "email" | "senha_hash" | "papel" | "criado_em" | "usuario", ExtArgs["result"]["usuarios_admin"]>
 
   export type $usuarios_adminPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "usuarios_admin"
@@ -5700,6 +5720,7 @@ export namespace Prisma {
       senha_hash: string
       papel: $Enums.usuarios_admin_papel
       criado_em: Date
+      usuario: string | null
     }, ExtArgs["result"]["usuarios_admin"]>
     composites: {}
   }
@@ -6075,6 +6096,7 @@ export namespace Prisma {
     readonly senha_hash: FieldRef<"usuarios_admin", 'String'>
     readonly papel: FieldRef<"usuarios_admin", 'usuarios_admin_papel'>
     readonly criado_em: FieldRef<"usuarios_admin", 'DateTime'>
+    readonly usuario: FieldRef<"usuarios_admin", 'String'>
   }
     
 
@@ -6466,7 +6488,8 @@ export namespace Prisma {
     senha_hash: 'senha_hash',
     cep: 'cep',
     endereco: 'endereco',
-    criado_em: 'criado_em'
+    criado_em: 'criado_em',
+    usuario: 'usuario'
   };
 
   export type CidadaosScalarFieldEnum = (typeof CidadaosScalarFieldEnum)[keyof typeof CidadaosScalarFieldEnum]
@@ -6478,7 +6501,8 @@ export namespace Prisma {
     email: 'email',
     senha_hash: 'senha_hash',
     papel: 'papel',
-    criado_em: 'criado_em'
+    criado_em: 'criado_em',
+    usuario: 'usuario'
   };
 
   export type Usuarios_adminScalarFieldEnum = (typeof Usuarios_adminScalarFieldEnum)[keyof typeof Usuarios_adminScalarFieldEnum]
@@ -6552,7 +6576,8 @@ export namespace Prisma {
     telefone: 'telefone',
     senha_hash: 'senha_hash',
     cep: 'cep',
-    endereco: 'endereco'
+    endereco: 'endereco',
+    usuario: 'usuario'
   };
 
   export type cidadaosOrderByRelevanceFieldEnum = (typeof cidadaosOrderByRelevanceFieldEnum)[keyof typeof cidadaosOrderByRelevanceFieldEnum]
@@ -6561,7 +6586,8 @@ export namespace Prisma {
   export const usuarios_adminOrderByRelevanceFieldEnum: {
     nome: 'nome',
     email: 'email',
-    senha_hash: 'senha_hash'
+    senha_hash: 'senha_hash',
+    usuario: 'usuario'
   };
 
   export type usuarios_adminOrderByRelevanceFieldEnum = (typeof usuarios_adminOrderByRelevanceFieldEnum)[keyof typeof usuarios_adminOrderByRelevanceFieldEnum]
@@ -6900,6 +6926,7 @@ export namespace Prisma {
     cep?: StringNullableFilter<"cidadaos"> | string | null
     endereco?: StringNullableFilter<"cidadaos"> | string | null
     criado_em?: DateTimeFilter<"cidadaos"> | Date | string
+    usuario?: StringNullableFilter<"cidadaos"> | string | null
     agendamentos?: AgendamentosListRelationFilter
   }
 
@@ -6912,6 +6939,7 @@ export namespace Prisma {
     cep?: SortOrderInput | SortOrder
     endereco?: SortOrderInput | SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrderInput | SortOrder
     agendamentos?: agendamentosOrderByRelationAggregateInput
     _relevance?: cidadaosOrderByRelevanceInput
   }
@@ -6919,6 +6947,7 @@ export namespace Prisma {
   export type cidadaosWhereUniqueInput = Prisma.AtLeast<{
     id?: number
     email?: string
+    usuario?: string
     AND?: cidadaosWhereInput | cidadaosWhereInput[]
     OR?: cidadaosWhereInput[]
     NOT?: cidadaosWhereInput | cidadaosWhereInput[]
@@ -6929,7 +6958,7 @@ export namespace Prisma {
     endereco?: StringNullableFilter<"cidadaos"> | string | null
     criado_em?: DateTimeFilter<"cidadaos"> | Date | string
     agendamentos?: AgendamentosListRelationFilter
-  }, "id" | "email">
+  }, "id" | "email" | "usuario">
 
   export type cidadaosOrderByWithAggregationInput = {
     id?: SortOrder
@@ -6940,6 +6969,7 @@ export namespace Prisma {
     cep?: SortOrderInput | SortOrder
     endereco?: SortOrderInput | SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrderInput | SortOrder
     _count?: cidadaosCountOrderByAggregateInput
     _avg?: cidadaosAvgOrderByAggregateInput
     _max?: cidadaosMaxOrderByAggregateInput
@@ -6959,6 +6989,7 @@ export namespace Prisma {
     cep?: StringNullableWithAggregatesFilter<"cidadaos"> | string | null
     endereco?: StringNullableWithAggregatesFilter<"cidadaos"> | string | null
     criado_em?: DateTimeWithAggregatesFilter<"cidadaos"> | Date | string
+    usuario?: StringNullableWithAggregatesFilter<"cidadaos"> | string | null
   }
 
   export type usuarios_adminWhereInput = {
@@ -6971,6 +7002,7 @@ export namespace Prisma {
     senha_hash?: StringFilter<"usuarios_admin"> | string
     papel?: Enumusuarios_admin_papelFilter<"usuarios_admin"> | $Enums.usuarios_admin_papel
     criado_em?: DateTimeFilter<"usuarios_admin"> | Date | string
+    usuario?: StringNullableFilter<"usuarios_admin"> | string | null
   }
 
   export type usuarios_adminOrderByWithRelationInput = {
@@ -6980,12 +7012,14 @@ export namespace Prisma {
     senha_hash?: SortOrder
     papel?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrderInput | SortOrder
     _relevance?: usuarios_adminOrderByRelevanceInput
   }
 
   export type usuarios_adminWhereUniqueInput = Prisma.AtLeast<{
     id?: number
     email?: string
+    usuario?: string
     AND?: usuarios_adminWhereInput | usuarios_adminWhereInput[]
     OR?: usuarios_adminWhereInput[]
     NOT?: usuarios_adminWhereInput | usuarios_adminWhereInput[]
@@ -6993,7 +7027,7 @@ export namespace Prisma {
     senha_hash?: StringFilter<"usuarios_admin"> | string
     papel?: Enumusuarios_admin_papelFilter<"usuarios_admin"> | $Enums.usuarios_admin_papel
     criado_em?: DateTimeFilter<"usuarios_admin"> | Date | string
-  }, "id" | "email">
+  }, "id" | "email" | "usuario">
 
   export type usuarios_adminOrderByWithAggregationInput = {
     id?: SortOrder
@@ -7002,6 +7036,7 @@ export namespace Prisma {
     senha_hash?: SortOrder
     papel?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrderInput | SortOrder
     _count?: usuarios_adminCountOrderByAggregateInput
     _avg?: usuarios_adminAvgOrderByAggregateInput
     _max?: usuarios_adminMaxOrderByAggregateInput
@@ -7019,6 +7054,7 @@ export namespace Prisma {
     senha_hash?: StringWithAggregatesFilter<"usuarios_admin"> | string
     papel?: Enumusuarios_admin_papelWithAggregatesFilter<"usuarios_admin"> | $Enums.usuarios_admin_papel
     criado_em?: DateTimeWithAggregatesFilter<"usuarios_admin"> | Date | string
+    usuario?: StringNullableWithAggregatesFilter<"usuarios_admin"> | string | null
   }
 
   export type agendamento_participantesCreateInput = {
@@ -7266,6 +7302,7 @@ export namespace Prisma {
     cep?: string | null
     endereco?: string | null
     criado_em?: Date | string
+    usuario?: string | null
     agendamentos?: agendamentosCreateNestedManyWithoutCidadaosInput
   }
 
@@ -7278,6 +7315,7 @@ export namespace Prisma {
     cep?: string | null
     endereco?: string | null
     criado_em?: Date | string
+    usuario?: string | null
     agendamentos?: agendamentosUncheckedCreateNestedManyWithoutCidadaosInput
   }
 
@@ -7289,6 +7327,7 @@ export namespace Prisma {
     cep?: NullableStringFieldUpdateOperationsInput | string | null
     endereco?: NullableStringFieldUpdateOperationsInput | string | null
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
     agendamentos?: agendamentosUpdateManyWithoutCidadaosNestedInput
   }
 
@@ -7301,6 +7340,7 @@ export namespace Prisma {
     cep?: NullableStringFieldUpdateOperationsInput | string | null
     endereco?: NullableStringFieldUpdateOperationsInput | string | null
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
     agendamentos?: agendamentosUncheckedUpdateManyWithoutCidadaosNestedInput
   }
 
@@ -7313,6 +7353,7 @@ export namespace Prisma {
     cep?: string | null
     endereco?: string | null
     criado_em?: Date | string
+    usuario?: string | null
   }
 
   export type cidadaosUpdateManyMutationInput = {
@@ -7323,6 +7364,7 @@ export namespace Prisma {
     cep?: NullableStringFieldUpdateOperationsInput | string | null
     endereco?: NullableStringFieldUpdateOperationsInput | string | null
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type cidadaosUncheckedUpdateManyInput = {
@@ -7334,6 +7376,7 @@ export namespace Prisma {
     cep?: NullableStringFieldUpdateOperationsInput | string | null
     endereco?: NullableStringFieldUpdateOperationsInput | string | null
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type usuarios_adminCreateInput = {
@@ -7342,6 +7385,7 @@ export namespace Prisma {
     senha_hash: string
     papel?: $Enums.usuarios_admin_papel
     criado_em?: Date | string
+    usuario?: string | null
   }
 
   export type usuarios_adminUncheckedCreateInput = {
@@ -7351,6 +7395,7 @@ export namespace Prisma {
     senha_hash: string
     papel?: $Enums.usuarios_admin_papel
     criado_em?: Date | string
+    usuario?: string | null
   }
 
   export type usuarios_adminUpdateInput = {
@@ -7359,6 +7404,7 @@ export namespace Prisma {
     senha_hash?: StringFieldUpdateOperationsInput | string
     papel?: Enumusuarios_admin_papelFieldUpdateOperationsInput | $Enums.usuarios_admin_papel
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type usuarios_adminUncheckedUpdateInput = {
@@ -7368,6 +7414,7 @@ export namespace Prisma {
     senha_hash?: StringFieldUpdateOperationsInput | string
     papel?: Enumusuarios_admin_papelFieldUpdateOperationsInput | $Enums.usuarios_admin_papel
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type usuarios_adminCreateManyInput = {
@@ -7377,6 +7424,7 @@ export namespace Prisma {
     senha_hash: string
     papel?: $Enums.usuarios_admin_papel
     criado_em?: Date | string
+    usuario?: string | null
   }
 
   export type usuarios_adminUpdateManyMutationInput = {
@@ -7385,6 +7433,7 @@ export namespace Prisma {
     senha_hash?: StringFieldUpdateOperationsInput | string
     papel?: Enumusuarios_admin_papelFieldUpdateOperationsInput | $Enums.usuarios_admin_papel
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type usuarios_adminUncheckedUpdateManyInput = {
@@ -7394,6 +7443,7 @@ export namespace Prisma {
     senha_hash?: StringFieldUpdateOperationsInput | string
     papel?: Enumusuarios_admin_papelFieldUpdateOperationsInput | $Enums.usuarios_admin_papel
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -7883,6 +7933,7 @@ export namespace Prisma {
     cep?: SortOrder
     endereco?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrder
   }
 
   export type cidadaosAvgOrderByAggregateInput = {
@@ -7898,6 +7949,7 @@ export namespace Prisma {
     cep?: SortOrder
     endereco?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrder
   }
 
   export type cidadaosMinOrderByAggregateInput = {
@@ -7909,6 +7961,7 @@ export namespace Prisma {
     cep?: SortOrder
     endereco?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrder
   }
 
   export type cidadaosSumOrderByAggregateInput = {
@@ -7935,6 +7988,7 @@ export namespace Prisma {
     senha_hash?: SortOrder
     papel?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrder
   }
 
   export type usuarios_adminAvgOrderByAggregateInput = {
@@ -7948,6 +8002,7 @@ export namespace Prisma {
     senha_hash?: SortOrder
     papel?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrder
   }
 
   export type usuarios_adminMinOrderByAggregateInput = {
@@ -7957,6 +8012,7 @@ export namespace Prisma {
     senha_hash?: SortOrder
     papel?: SortOrder
     criado_em?: SortOrder
+    usuario?: SortOrder
   }
 
   export type usuarios_adminSumOrderByAggregateInput = {
@@ -8738,6 +8794,7 @@ export namespace Prisma {
     cep?: string | null
     endereco?: string | null
     criado_em?: Date | string
+    usuario?: string | null
   }
 
   export type cidadaosUncheckedCreateWithoutAgendamentosInput = {
@@ -8749,6 +8806,7 @@ export namespace Prisma {
     cep?: string | null
     endereco?: string | null
     criado_em?: Date | string
+    usuario?: string | null
   }
 
   export type cidadaosCreateOrConnectWithoutAgendamentosInput = {
@@ -8828,6 +8886,7 @@ export namespace Prisma {
     cep?: NullableStringFieldUpdateOperationsInput | string | null
     endereco?: NullableStringFieldUpdateOperationsInput | string | null
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type cidadaosUncheckedUpdateWithoutAgendamentosInput = {
@@ -8839,6 +8898,7 @@ export namespace Prisma {
     cep?: NullableStringFieldUpdateOperationsInput | string | null
     endereco?: NullableStringFieldUpdateOperationsInput | string | null
     criado_em?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type agendamentosCreateWithoutCidadaosInput = {

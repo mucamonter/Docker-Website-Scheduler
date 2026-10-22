@@ -162,7 +162,8 @@ exports.Prisma.CidadaosScalarFieldEnum = {
   senha_hash: 'senha_hash',
   cep: 'cep',
   endereco: 'endereco',
-  criado_em: 'criado_em'
+  criado_em: 'criado_em',
+  usuario: 'usuario'
 };
 
 exports.Prisma.Usuarios_adminScalarFieldEnum = {
@@ -171,7 +172,8 @@ exports.Prisma.Usuarios_adminScalarFieldEnum = {
   email: 'email',
   senha_hash: 'senha_hash',
   papel: 'papel',
-  criado_em: 'criado_em'
+  criado_em: 'criado_em',
+  usuario: 'usuario'
 };
 
 exports.Prisma.SortOrder = {
@@ -221,13 +223,15 @@ exports.Prisma.cidadaosOrderByRelevanceFieldEnum = {
   telefone: 'telefone',
   senha_hash: 'senha_hash',
   cep: 'cep',
-  endereco: 'endereco'
+  endereco: 'endereco',
+  usuario: 'usuario'
 };
 
 exports.Prisma.usuarios_adminOrderByRelevanceFieldEnum = {
   nome: 'nome',
   email: 'email',
-  senha_hash: 'senha_hash'
+  senha_hash: 'senha_hash',
+  usuario: 'usuario'
 };
 exports.agendamentos_atendimento = exports.$Enums.agendamentos_atendimento = {
   no_paco: 'no_paco',

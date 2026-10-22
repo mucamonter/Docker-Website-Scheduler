@@ -1,13 +1,14 @@
 // prisma7.config.ts
-import { defineConfig, env} from "prisma/config";
+
+import { definePrismaConfig } from "prisma/config";
+import { env } from "node:process";
 
 
-
-export default defineConfig({
+export default definePrismaConfig({
   schema: "./src/prisma/schema.prisma",
   datasource: {
     
-    url: env('DATABASE_URL') || "postgresql://mock:mock@localhost:5432/mock", 
+    url: env['DATABASE_URL'], 
   },
   
 });

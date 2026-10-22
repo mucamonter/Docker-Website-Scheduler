@@ -14,5 +14,11 @@ export declare class AuthController {
         sucesso: boolean;
         tipo: string;
         Redirect: string;
+        redirect?: undefined;
+    } | {
+        sucesso: boolean;
+        tipo: string;
+        redirect: string;
+        Redirect?: undefined;
     }>;
 }
