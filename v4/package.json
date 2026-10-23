@@ -50,7 +50,7 @@
     "prisma@7.10.1": true,
     "@prisma/engines@7.10.1": true,
     "esbuild@0.28.2": true,
-    "@swc/core@1.16.18": true,
-    "workerd@1.20261002.1": true
+    "workerd@1.20261002.1": true,
+    "@swc/core@1.16.20": true
   }
 }

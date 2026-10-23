@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Req, Res, HttpCode, HttpStatus, UnauthorizedException, InternalServerErrorException, Redirect } from "@nestjs/common";
-import { PrismaService } from "../admin/admin.controller";
+import { PrismaService } from "../prisma/prisma.service";
 import { Request } from "express";
 import * as bcrypt from 'bcryptjs';
 
@@ -41,11 +41,18 @@ async login(@Body() body: { login?: string; senha?: string }, @Req() req: Reques
         throw new UnauthorizedException('Informe o login e a senha');
     }
     
+    const adminEmail = process.env.ADMIN_USER
 //(sistema para logar admin)function
-    if (adminUser && login === adminUser.toLowerCase() && senha === adminPassword){
-        req.session.papel = 'admin';
-        req.session.usuario = adminUser;
-        return { sucesso: true, tipo: 'admin', Redirect: '/admin.html' };
+    if (adminEmail && login === adminUser.toLowerCase() && senha === adminPassword){
+
+        const adminDoBanco = await this.prisma.usuarios_admin.findFirst({
+            where: {login: login}
+        });
+
+        req.session.papel = 'admin;'
+        req.session.usuario = { id: adminDoBanco?.id, nome: adminUser, email: adminDoBanco?.email}
+
+        return { sucesso: true, tipo: 'admin', redirect: '/admin.html' };
     }
 
 //(sistema para logar usuario)function

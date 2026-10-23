@@ -1,15 +1,6 @@
-import { Controller, Get, Post, Body, Req, UnauthorizedException } from '@nestjs/common';
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client/extension';
+import { Controller } from '@nestjs/common';
 
-@Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  async onModuleInit() {
-    await this.$connect();
-  }
-
-  async onModuleDestroy() {
-    await this.$disconnect();
-  }
+@Controller() export class AdminController{
+  
 }
 
