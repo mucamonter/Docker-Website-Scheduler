@@ -2,7 +2,7 @@
   "name": "y",
   "version": "1.0.0",
   "description": "Sistema de agendamento com MySQL",
-  "main": "./src/server.ts",
+  "main": "dist/main.js",
   "prisma": {
     "schema": "./src/prisma/schema.prisma",
     "seed": "tsx src/prisma/seed.ts"
@@ -38,7 +38,7 @@
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "dotenv": "^18.0.8",
-    "prisma": "^8.0.0-rc.25",
+    "prisma": "^7.10.1",
     "swc-loader": "^0.2.7",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
@@ -46,11 +46,11 @@
   },
   "author": "",
   "license": "ISC",
-  "allowScripts": {
-    "prisma@7.10.1": true,
-    "@prisma/engines@7.10.1": true,
-    "esbuild@0.28.2": true,
-    "workerd@1.20261002.1": true,
-    "@swc/core@1.16.20": true
+  "engines": {
+    "runtime": {
+      "name": "node",
+      "version": "26.12.1",
+      "onFail": "download"
+    }
   }
 }

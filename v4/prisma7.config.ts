@@ -1,16 +1,10 @@
-// prisma7.config.ts
+import 'dotenv/config';
+import process from 'node:process'; // <--- Import explícito do Node.js
+import { defineConfig } from "prisma/config";
 
-import { definePrismaConfig } from "prisma/config";
-import { env } from "node:process";
-
-
-export default definePrismaConfig({
+export default defineConfig({
   schema: "./src/prisma/schema.prisma",
   datasource: {
-    
-    url: env['DATABASE_URL'], 
+    url: process.env.DATABASE_URL || "mysql://mock:mock@localhost:3306/mock",
   },
-  
 });
-
-

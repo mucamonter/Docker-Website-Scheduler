@@ -5,6 +5,8 @@ services:
     container_name: mariadb-server
     ports: ["3306:3306"]
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       MYSQL_USER: admin
       MYSQL_ROOT_PASSWORD: Ardmin321

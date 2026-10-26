@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2022",
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
@@ -18,5 +21,7 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*"
+  ]
 }
