@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,22 +11,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Controller, Get, Post, Body, Query, UseGuards, BadRequestException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AdminGuard } from '../common/guards/admin.guard';
-import { HORARIOS, diaUtil, hoje, blocosValidos, normalizarParticipantes } from '../common/utils/helpers';
-import { dataValida } from '../common/utils/date.util';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AgendamentoController = void 0;
+const common_1 = require("@nestjs/common");
+const prisma_service_1 = require("../prisma.service");
+const admin_guard_1 = require("../common/guards/admin.guard");
+const helpers_1 = require("../common/utils/helpers");
+const date_util_1 = require("../common/utils/date.util");
 let AgendamentoController = class AgendamentoController {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
     async horariosDisponiveis(data) {
-        if (!data || !dataValida(data))
-            throw new BadRequestException('Data inválida.');
-        if (!diaUtil(data))
+        if (!data || !(0, date_util_1.dataValida)(data))
+            throw new common_1.BadRequestException('Data inválida.');
+        if (!(0, helpers_1.diaUtil)(data))
             return { horariosOcupados: [], horariosDisponiveis: [] };
-        return { horariosOcupados: [], horariosDisponiveis: HORARIOS };
+        return { horariosOcupados: [], horariosDisponiveis: helpers_1.HORARIOS };
     }
     async criarAgendamentoAdmin(body) {
         const nome = (body.nome || '').trim();
@@ -38,16 +41,16 @@ let AgendamentoController = class AgendamentoController {
         const tipo = body.tipo_atendimento === 'grupo' ? 'grupo' : 'unico';
         const atendimento = body.atendimento === 'marcado' ? 'marcado' : 'no_paco';
         if (!nome || !motivo || !dataStr)
-            throw new BadRequestException('Nome, motivo e data são obrigatórios.');
-        if (!dataValida(dataStr) || dataStr < hoje() || !diaUtil(dataStr))
-            throw new BadRequestException('Data inválida.');
-        const participantes = normalizarParticipantes(body.participantes);
-        const blocos = blocosValidos(body.blocos);
+            throw new common_1.BadRequestException('Nome, motivo e data são obrigatórios.');
+        if (!(0, date_util_1.dataValida)(dataStr) || dataStr < (0, helpers_1.hoje)() || !(0, helpers_1.diaUtil)(dataStr))
+            throw new common_1.BadRequestException('Data inválida.');
+        const participantes = (0, helpers_1.normalizarParticipantes)(body.participantes);
+        const blocos = (0, helpers_1.blocosValidos)(body.blocos);
         if (tipo === 'grupo') {
             if (!participantes.length)
-                throw new BadRequestException('Adicione pelo menos o representante do grupo.');
+                throw new common_1.BadRequestException('Adicione pelo menos o representante do grupo.');
             if (!blocos.length)
-                throw new BadRequestException('Selecione pelo menos um bloco de horário.');
+                throw new common_1.BadRequestException('Selecione pelo menos um bloco de horário.');
         }
         const dataFormatada = new Date(dataStr);
         const slotsHorario = tipo === 'grupo' ? blocos : [horario];
@@ -86,30 +89,30 @@ let AgendamentoController = class AgendamentoController {
         }
         catch (e) {
             if (e.code === 'P2002') {
-                throw new ConflictException('Um ou mais blocos de horário já estão ocupados.');
+                throw new common_1.ConflictException('Um ou mais blocos de horário já estão ocupados.');
             }
             throw e;
         }
     }
 };
+exports.AgendamentoController = AgendamentoController;
 __decorate([
-    Get('agendamentos/disponiveis'),
-    __param(0, Query('data')),
+    (0, common_1.Get)('agendamentos/disponiveis'),
+    __param(0, (0, common_1.Query)('data')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AgendamentoController.prototype, "horariosDisponiveis", null);
 __decorate([
-    UseGuards(AdminGuard),
-    Post('admin/agendamentos'),
-    __param(0, Body()),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    (0, common_1.Post)('admin/agendamentos'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AgendamentoController.prototype, "criarAgendamentoAdmin", null);
-AgendamentoController = __decorate([
-    Controller('api'),
-    __metadata("design:paramtypes", [PrismaService])
+exports.AgendamentoController = AgendamentoController = __decorate([
+    (0, common_1.Controller)('api'),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], AgendamentoController);
-export { AgendamentoController };
 //# sourceMappingURL=agendamento.controller.js.map

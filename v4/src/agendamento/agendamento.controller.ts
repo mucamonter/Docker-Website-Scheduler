@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query, Param, ParseIntPipe, UseGuards, BadRequestException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../prisma.service';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { HORARIOS, diaUtil, hoje, blocosValidos, normalizarParticipantes } from '../common/utils/helpers';
 import { dataValida } from '../common/utils/date.util';

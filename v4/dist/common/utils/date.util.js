@@ -1,4 +1,7 @@
-export function dataValida(dataISO) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.dataValida = dataValida;
+function dataValida(dataISO) {
     const match = dataISO.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!match)
         return false;

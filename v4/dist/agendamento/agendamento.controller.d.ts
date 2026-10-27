@@ -1,4 +1,4 @@
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../prisma.service';
 export declare class AgendamentoController {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -8,6 +8,6 @@ export declare class AgendamentoController {
     }>;
     criarAgendamentoAdmin(body: any): Promise<{
         sucesso: boolean;
-        id: any;
+        id: number;
     }>;
 }

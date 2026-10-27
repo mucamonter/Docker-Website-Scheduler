@@ -1,7 +1,9 @@
-import { PrismaClient } from "../generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-const prisma = new PrismaClient(({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const client_1 = require("@prisma/client");
+const adapter_pg_1 = require("@prisma/adapter-pg");
+const prisma = new client_1.PrismaClient(({
+    adapter: new adapter_pg_1.PrismaPg({ connectionString: process.env.DATABASE_URL })
 }));
 async function main() {
     const statusPrisma = prisma;

@@ -4,8 +4,7 @@ import { Request } from "express";
 
 import { CidadaoGuard } from "./cidadao.guard";
 
-import { PrismaService } from "../prisma/prisma.service";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaService } from "../prisma.service";
 
 import * as bcrypt from 'bcryptjs';
 
@@ -66,7 +65,7 @@ async meusAgendamentos(@Req() req: Request){
         }),
         this.prisma.agendamentos.findMany({
             where: {cidadao_id: cidadaoId},
-            orderBy: [{ data: 'desc ' }, {horario: 'desc'}],
+            orderBy: [{ data: 'desc' }, {horario: 'desc'}],
         }),
     ]);
     return { cidadao, agendamentos};

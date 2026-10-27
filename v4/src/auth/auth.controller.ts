@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Req, Res, HttpCode, HttpStatus, UnauthorizedException, InternalServerErrorException, Redirect } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaService } from "../prisma.service";
 import { Request } from "express";
 import * as bcrypt from 'bcryptjs';
 
@@ -46,7 +46,7 @@ async login(@Body() body: { login?: string; senha?: string }, @Req() req: Reques
     if (adminEmail && login === adminUser.toLowerCase() && senha === adminPassword){
 
         const adminDoBanco = await this.prisma.usuarios_admin.findFirst({
-            where: {login: login}
+            where: {email: login}
         });
 
         req.session.papel = 'admin;'
@@ -57,13 +57,13 @@ async login(@Body() body: { login?: string; senha?: string }, @Req() req: Reques
 
 //(sistema para logar usuario)function
 
-    const staffUser = await this.prisma.admin.findUnique({
+    const staffUser = await this.prisma.usuarios_admin.findUnique({
       where: { email: login},
     });
     
     if (staffUser && (await bcrypt.compare(senha, staffUser.senha_hash))){
         req.session.papel = staffUser.papel;
-        req.session.usuario = staffUser.email;
+        req.session.email = staffUser.email;
         
         return { sucesso: true, tipo: 'cidadao', redirect: '/cidadao.html' };
     }

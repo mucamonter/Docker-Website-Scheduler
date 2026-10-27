@@ -1,4 +1,4 @@
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaService } from "../prisma.service";
 import { Request } from "express";
 import 'express-session';
 export declare class AuthController {
@@ -21,7 +21,12 @@ export declare class AuthController {
     }>;
     adminMe(req: Request): Promise<{
         autenticado: boolean;
-        usuario: any;
+        usuario: string | {
+            id: number;
+            nome: string;
+            email: string;
+            papel?: string;
+        };
         papel: string;
     }>;
 }
