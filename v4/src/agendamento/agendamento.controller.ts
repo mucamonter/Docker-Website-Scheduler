@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Query, UseGuards, BadRequestException, ConflictException } from '@nestjs/common';
+import {  Get, Post, Body, Query, UseGuards, BadRequestException, ConflictException, Controller } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { HORARIOS, diaUtil, hoje, blocosValidos, normalizarParticipantes } from '../common/utils/helpers';
 import { dataValida } from '../common/utils/date.util';
 import { Prisma } from '@prisma/client';
 
-@Controller('api')
+@Controller('agendamentos')
 export class AgendamentoController {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -24,27 +24,36 @@ export class AgendamentoController {
     const telefone = (body.telefone || '').trim();
     const endereco = (body.endereco || '').trim();
     const motivo = (body.motivo || '').trim();
+    const tratativa = (body.tratativa || '').trim();
     const dataStr = (body.data || '').trim();
     const horario = (body.horario || '').trim();
+    const status = (body.status || 'pedido_pendente').trim();
     const tipo = body.tipo_atendimento === 'grupo' ? 'grupo' : 'unico';
     const atendimento = body.atendimento === 'marcado' ? 'marcado' : 'no_paco';
 
-    if (!nome || !motivo || !dataStr) throw new BadRequestException('Nome, motivo e data são obrigatórios.');
-    if (!dataValida(dataStr) || dataStr < hoje() || !diaUtil(dataStr)) throw new BadRequestException('Data inválida.');
+    // 1. Validações básicas
+    if (!nome || !motivo || !dataStr) {
+      throw new BadRequestException('Nome, motivo e data são obrigatórios.');
+    }
+    if (!dataValida(dataStr) || dataStr < hoje() || !diaUtil(dataStr)) {
+      throw new BadRequestException('Data inválida.');
+    }
 
     const participantes = normalizarParticipantes(body.participantes);
     const blocos = blocosValidos(body.blocos);
 
+    // 2. Validações específicas por tipo de atendimento
     if (tipo === 'grupo') {
       if (!participantes.length) throw new BadRequestException('Adicione pelo menos o representante do grupo.');
       if (!blocos.length) throw new BadRequestException('Selecione pelo menos um bloco de horário.');
+    } else {
+      if (!horario) throw new BadRequestException('Horário é obrigatório para atendimento único.');
     }
 
-    const dataFormatada = new Date(dataStr);
+    const dataFormatada = new Date(`${dataStr}T00:00:00Z`);
     const slotsHorario = tipo === 'grupo' ? blocos : [horario];
 
     try {
-      // Transação nativa do Prisma com nested writes (sem SQL manual)
       const novoAgendamento = await this.prisma.$transaction(async (tx) => {
         return await tx.agendamentos.create({
           data: {
@@ -53,14 +62,15 @@ export class AgendamentoController {
             telefone: telefone || null,
             endereco: endereco || null,
             motivo,
+            tratativa: tratativa || null,
             data: dataFormatada,
             horario: new Date(`${dataStr}T${slotsHorario[0]}:00Z`),
-            status: 'pedido_pendente',
+            status,
             atendimento,
             tipo_atendimento: tipo,
-            blocos_json: tipo === 'grupo' ? (blocos as Prisma.InputJsonValue): Prisma.DbNull,
+            blocos_json: tipo === 'grupo' ? (blocos as Prisma.InputJsonValue) : Prisma.DbNull,
 
-            // Criação automática de slots na mesma operação
+            // Criação automática dos slots de horário
             agendamento_slots: {
               create: slotsHorario.map((h) => ({
                 data: dataFormatada,
@@ -68,7 +78,7 @@ export class AgendamentoController {
               })),
             },
 
-            // Criação automática de participantes na mesma operação
+            // Criação automática dos participantes
             agendamento_participantes: {
               create: participantes.map((p, index) => ({
                 nome: p.nome,

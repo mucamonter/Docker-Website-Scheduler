@@ -162,7 +162,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "adminMe", null);
 exports.AuthController = AuthController = __decorate([
-    (0, common_1.Controller)('api'),
+    (0, common_1.Controller)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

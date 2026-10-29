@@ -14,7 +14,7 @@ declare module 'express-session' {
   }
 }
 
-@Controller('api/cidadao')
+@Controller('cidadao')
 export class CidadaoController {
     constructor(private readonly prisma: PrismaService){}
 

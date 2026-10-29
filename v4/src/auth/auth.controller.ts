@@ -24,7 +24,7 @@ declare module 'express-session' {
   }
 }
 
-@Controller('api')
+@Controller()
 export class AuthController {
   constructor(private readonly prisma: PrismaService) {}
 

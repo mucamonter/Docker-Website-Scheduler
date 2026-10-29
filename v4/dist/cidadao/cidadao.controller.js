@@ -157,7 +157,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CidadaoController.prototype, "cancelarAgendamento", null);
 exports.CidadaoController = CidadaoController = __decorate([
-    (0, common_1.Controller)('api/cidadao'),
+    (0, common_1.Controller)('cidadao'),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], CidadaoController);
 //# sourceMappingURL=cidadao.controller.js.map

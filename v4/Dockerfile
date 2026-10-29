@@ -18,7 +18,7 @@ RUN DATABASE_URL="postgresql://mock:mock@localhost:5432/mock" npx prisma generat
 
 
 RUN npm exec prisma generate
-RUN pnpm build
+RUN pnpm run build
 
 
 

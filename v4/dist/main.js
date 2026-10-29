@@ -8,6 +8,7 @@ const app_modules_1 = require("./app.modules");
 const express_session_1 = __importDefault(require("express-session"));
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_modules_1.AppModule);
+    app.setGlobalPrefix('api');
     app.use((0, express_session_1.default)({
         secret: process.env.SESSION_SECRET || 'sua-chave-secreta-aqui',
         resave: false,

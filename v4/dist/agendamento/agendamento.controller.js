@@ -37,14 +37,18 @@ let AgendamentoController = class AgendamentoController {
         const telefone = (body.telefone || '').trim();
         const endereco = (body.endereco || '').trim();
         const motivo = (body.motivo || '').trim();
+        const tratativa = (body.tratativa || '').trim();
         const dataStr = (body.data || '').trim();
         const horario = (body.horario || '').trim();
+        const status = (body.status || 'pedido_pendente').trim();
         const tipo = body.tipo_atendimento === 'grupo' ? 'grupo' : 'unico';
         const atendimento = body.atendimento === 'marcado' ? 'marcado' : 'no_paco';
-        if (!nome || !motivo || !dataStr)
+        if (!nome || !motivo || !dataStr) {
             throw new common_1.BadRequestException('Nome, motivo e data são obrigatórios.');
-        if (!(0, date_util_1.dataValida)(dataStr) || dataStr < (0, helpers_1.hoje)() || !(0, helpers_1.diaUtil)(dataStr))
+        }
+        if (!(0, date_util_1.dataValida)(dataStr) || dataStr < (0, helpers_1.hoje)() || !(0, helpers_1.diaUtil)(dataStr)) {
             throw new common_1.BadRequestException('Data inválida.');
+        }
         const participantes = (0, helpers_1.normalizarParticipantes)(body.participantes);
         const blocos = (0, helpers_1.blocosValidos)(body.blocos);
         if (tipo === 'grupo') {
@@ -53,7 +57,11 @@ let AgendamentoController = class AgendamentoController {
             if (!blocos.length)
                 throw new common_1.BadRequestException('Selecione pelo menos um bloco de horário.');
         }
-        const dataFormatada = new Date(dataStr);
+        else {
+            if (!horario)
+                throw new common_1.BadRequestException('Horário é obrigatório para atendimento único.');
+        }
+        const dataFormatada = new Date(`${dataStr}T00:00:00Z`);
         const slotsHorario = tipo === 'grupo' ? blocos : [horario];
         try {
             const novoAgendamento = await this.prisma.$transaction(async (tx) => {
@@ -64,9 +72,10 @@ let AgendamentoController = class AgendamentoController {
                         telefone: telefone || null,
                         endereco: endereco || null,
                         motivo,
+                        tratativa: tratativa || null,
                         data: dataFormatada,
                         horario: new Date(`${dataStr}T${slotsHorario[0]}:00Z`),
-                        status: 'pedido_pendente',
+                        status,
                         atendimento,
                         tipo_atendimento: tipo,
                         blocos_json: tipo === 'grupo' ? blocos : client_1.Prisma.DbNull,
@@ -113,7 +122,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AgendamentoController.prototype, "criarAgendamentoAdmin", null);
 exports.AgendamentoController = AgendamentoController = __decorate([
-    (0, common_1.Controller)('api'),
+    (0, common_1.Controller)('agendamentos'),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], AgendamentoController);
 //# sourceMappingURL=agendamento.controller.js.map
